@@ -1,0 +1,28 @@
+// D: \14 - DevOps - batch\devOps - 14 - notes\job portal\src\validators\validators.js
+
+const { body } = require("express-validator");
+
+const isEmail = body("email")
+    .trim()
+    .isEmail()
+    .withMessage("Please provide a valid email");
+
+const hasPassword = body("password")
+    .trim()
+    .notEmpty()
+    .withMessage("Password is required")
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters");
+
+const hasName = body("name")
+    .trim()
+    .notEmpty()
+    .withMessage("Name is required")
+    .isLength({ min: 5 })
+    .withMessage("Name must be at least 5 characters");
+
+module.exports = {
+    isEmail,
+    hasPassword,
+    hasName
+};

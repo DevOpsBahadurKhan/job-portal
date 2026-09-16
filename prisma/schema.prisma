@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserRole {
+  CANDIDATE
+  RECRUITER
+  ADMIN
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  INTERNSHIP
+  CONTRACT
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+enum ApplicationStatus {
+  APPLIED
+  SHORTLISTED
+  REJECTED
+  HIRED
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  password     String
+  googleId     String?       @unique
+  role         UserRole      @default(CANDIDATE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  company      Company?
+  jobs         Job[]
+  applications Application[]
+  refreshTokens RefreshToken[]
+
+  @@index([role])
+}
+
+model Company {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?  @db.Text
+  website     String?
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId     Int      @unique
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  jobs        Job[]
+}
+
+model Job {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String    @db.Text
+  location    String?
+  salaryMin   Int?
+  salaryMax   Int?
+  jobType     JobType   @default(FULL_TIME)
+  status      JobStatus @default(OPEN)
+  skills      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  companyId   Int
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  recruiterId Int
+  recruiter   User      @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+
+  applications Application[]
+
+  @@index([companyId])
+  @@index([recruiterId])
+  @@index([status])
+}
+
+model Application {
+  id          Int               @id @default(autoincrement())
+  coverLetter String?           @db.Text
+  resumeUrl   String?
+  status      ApplicationStatus @default(APPLIED)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  jobId       Int
+  job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  candidateId Int
+  candidate   User              @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, candidateId])
+  @@index([candidateId])
+  @@index([status])
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

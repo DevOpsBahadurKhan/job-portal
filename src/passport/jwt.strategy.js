@@ -1,0 +1,42 @@
+const passport = require("passport");
+const passportJwt = require("passport-jwt");
+const prisma = require("../prisma");
+
+const { Strategy, ExtractJwt } = passportJwt;
+
+const params = {
+    secretOrKey: process.env.JWT_SECRET,
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
+};
+
+const strategy = new Strategy(
+    params,
+    async (payload, done) => {
+        try {
+            const user = await prisma.user.findUnique({
+                where: {
+                    id: payload.id
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true
+                }
+            });
+
+            if (!user) {
+                return done(null, false);
+            }
+
+            return done(null, user);
+
+        } catch (error) {
+            return done(error, false);
+        }
+    }
+);
+
+passport.use("jwt", strategy); //alreay here then why again in route
+
+module.exports = strategy;
