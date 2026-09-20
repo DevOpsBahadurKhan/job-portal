@@ -31,6 +31,10 @@ const defineAbility = (user) => {
             recruiterId: user.id
         });
 
+        can("update", "Company", {
+            ownerId: user.id
+        });
+
         can("delete", "Job", {
             recruiterId: user.id
         });
@@ -40,7 +44,6 @@ const defineAbility = (user) => {
 
     // Admin permissions
     if (user.role === "ADMIN") {
-
         can("manage", "all");
     }
 

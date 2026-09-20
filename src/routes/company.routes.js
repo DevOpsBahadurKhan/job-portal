@@ -1,21 +1,62 @@
 const express = require("express");
-
-const passport = require("../passport");
-const authorize = require("../middleware/role");
-
-const {
-    createCompany
-} = require("../controllers/company.controller");
-
 const router = express.Router();
 
+const passport = require("../passport");
+const { loadResource } = require("../middleware/resource");
+const authorize = require("../middleware/authorize");
+
+const {
+    createCompany,
+    getMyCompany,
+    getCompanyById,
+    updateCompany
+} = require("../controllers/company.controller");
+
+
+
+
+// Create Company
 router.post(
     "/",
     passport.authenticate("jwt", {
         session: false
     }),
-    authorize("RECRUITER"),
+    authorize("create", "Company"),
     createCompany
 );
+
+
+// Get My Company
+router.get(
+    "/me",
+    passport.authenticate("jwt", {
+        session: false
+    }),
+    getMyCompany
+);
+
+
+// Get Company By ID
+router.get(
+    "/:id",
+    passport.authenticate("jwt", {
+        session: false
+    }),
+
+    getCompanyById
+);
+
+
+// Update Company
+router.patch(
+    "/:id",
+    passport.authenticate("jwt", {
+        session: false
+    }),
+    loadResource("company", "id", "Company"),
+    authorize("update", "Company"),
+    updateCompany
+);
+
 
 module.exports = router;

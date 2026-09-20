@@ -37,6 +37,6 @@ const strategy = new Strategy(
     }
 );
 
-passport.use("jwt", strategy); //alreay here then why again in route
+passport.use("jwt", strategy); 
 
 module.exports = strategy;

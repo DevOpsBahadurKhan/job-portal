@@ -11,7 +11,7 @@ router.post("/register",
     validationHnadler, register);
 
 router.post("/login",
-    [isEmail, hasPassword, hasName],
+    [isEmail, hasPassword],
     validationHnadler, login);
 
 router.get('/profile', passport.authenticate("jwt", {

@@ -1,8 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const { PrismaMariaDb } = require("@prisma/adapter-mariadb");
 
-// const adapter = new PrismaMariaDb(process.env.DATABASE_URL);
-
 
 const adapter = new PrismaMariaDb(
     {
@@ -16,5 +14,9 @@ const adapter = new PrismaMariaDb(
 const prisma = new PrismaClient({
     adapter
 });
+
+
+
+
 
 module.exports = prisma;

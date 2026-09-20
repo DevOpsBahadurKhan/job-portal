@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Job Portal REST API documentation">
+    <title>Job Portal API Docs</title>
+    <style>
+        :root {
+            --ink: #172018;
+            --muted: #657066;
+            --paper: #f5f6ef;
+            --surface: #fffef9;
+            --line: #dfe4d8;
+            --green: #216e4a;
+            --green-soft: #e7f2e9;
+            --orange: #c85b2d;
+            --purple: #7653a6;
+            --shadow: 0 18px 50px rgba(32, 53, 38, .08)
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html {
+            scroll-behavior: smooth
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            background: var(--paper);
+            font-family: Georgia, 'Times New Roman', serif;
+            line-height: 1.55
+        }
+
+        code,
+        pre,
+        .method,
+        .eyebrow,
+        nav,
+        button {
+            font-family: 'Segoe UI', Arial, sans-serif
+        }
+
+        code {
+            color: var(--green);
+            font-size: .92em
+        }
+
+        .topbar {
+            background: var(--ink);
+            color: #f8f5e9;
+            padding: 12px 5vw;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            font: 14px 'Segoe UI', Arial, sans-serif
+        }
+
+        .topbar strong {
+            color: #f3bb68;
+            letter-spacing: .04em
+        }
+
+        .topbar a {
+            color: #d8e7d9;
+            text-decoration: none
+        }
+
+        .layout {
+            max-width: 1440px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: 250px minmax(0, 1fr)
+        }
+
+        aside {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            padding: 38px 22px;
+            border-right: 1px solid var(--line);
+            background: rgba(245, 246, 239, .82)
+        }
+
+        .brand {
+            font-size: 25px;
+            font-weight: 700;
+            line-height: 1.05;
+            margin-bottom: 7px
+        }
+
+        .brand span {
+            color: var(--orange)
+        }
+
+        .side-note {
+            color: var(--muted);
+            font: 12px/1.4 'Segoe UI', Arial, sans-serif;
+            margin-bottom: 32px
+        }
+
+        nav a {
+            display: block;
+            color: var(--muted);
+            text-decoration: none;
+            padding: 7px 10px;
+            margin: 2px 0;
+            font-size: 13px
+        }
+
+        nav a:hover {
+            color: var(--green);
+            background: var(--green-soft);
+            border-left: 2px solid var(--green)
+        }
+
+        .main {
+            min-width: 0;
+            padding: 0 5vw 80px
+        }
+
+        .hero {
+            padding: 72px 0 42px;
+            max-width: 900px
+        }
+
+        .eyebrow {
+            color: var(--orange);
+            text-transform: uppercase;
+            letter-spacing: .16em;
+            font-size: 11px;
+            font-weight: 700
+        }
+
+        h1 {
+            font-size: clamp(42px, 7vw, 78px);
+            line-height: .98;
+            font-weight: 700;
+            letter-spacing: -.035em;
+            margin: 16px 0 22px;
+            max-width: 800px
+        }
+
+        h1 em {
+            color: var(--green);
+            font-style: normal
+        }
+
+        h2 {
+            font-size: 34px;
+            line-height: 1.05;
+            margin: 0 0 12px
+        }
+
+        .lead {
+            color: var(--muted);
+            font-size: 19px;
+            max-width: 680px;
+            margin: 0
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 34px
+        }
+
+        .fact {
+            border-top: 3px solid var(--green);
+            padding: 14px 0
+        }
+
+        .fact strong {
+            display: block;
+            font-size: 17px
+        }
+
+        .fact small {
+            color: var(--muted);
+            font: 13px 'Segoe UI', Arial, sans-serif
+        }
+
+        section {
+            padding: 62px 0 0;
+            border-top: 1px solid var(--line);
+            margin-top: 46px;
+            scroll-margin-top: 20px
+        }
+
+        .section-intro {
+            color: var(--muted);
+            margin: 0 0 24px
+        }
+
+        .endpoint {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            margin: 18px 0;
+            border-radius: 4px;
+            overflow: hidden;
+            scroll-margin-top: 25px
+        }
+
+        .endpoint-head {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            flex-wrap: wrap;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--line)
+        }
+
+        .method {
+            min-width: 62px;
+            text-align: center;
+            color: #fff;
+            background: var(--green);
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            border-radius: 3px
+        }
+
+        .method.post {
+            background: var(--orange)
+        }
+
+        .method.patch {
+            background: var(--purple)
+        }
+
+        .method.delete {
+            background: #a83c3c
+        }
+
+        .path {
+            font: 700 16px 'Segoe UI', Arial, sans-serif;
+            word-break: break-word
+        }
+
+        .summary {
+            color: var(--muted);
+            font-size: 14px;
+            margin-left: auto
+        }
+
+        .badge {
+            font: 11px 'Segoe UI', Arial, sans-serif;
+            color: #2b62a3;
+            border: 1px solid #b8cee9;
+            background: #eff5fc;
+            padding: 3px 8px;
+            border-radius: 12px
+        }
+
+        .endpoint-body {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(260px, .9fr);
+            gap: 22px
+        }
+
+        .endpoint-body>p,
+        .endpoint-body p {
+            margin: 0 0 12px;
+            color: var(--muted);
+            font-size: 14px
+        }
+
+        .label {
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            font: 700 10px 'Segoe UI', Arial, sans-serif;
+            color: var(--muted);
+            margin: 15px 0 7px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font: 13px 'Segoe UI', Arial, sans-serif
+        }
+
+        th,
+        td {
+            text-align: left;
+            vertical-align: top;
+            border-bottom: 1px solid var(--line);
+            padding: 8px 7px
+        }
+
+        th {
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .06em
+        }
+
+        td:first-child {
+            color: var(--green);
+            font-weight: 700;
+            white-space: nowrap
+        }
+
+        pre {
+            position: relative;
+            background: #202923;
+            color: #dce8da;
+            border-radius: 4px;
+            padding: 18px;
+            margin: 0;
+            overflow: auto;
+            font-size: 12px;
+            line-height: 1.55;
+            min-height: 92px;
+            white-space: pre-wrap
+        }
+
+        .copy {
+            position: absolute;
+            right: 9px;
+            top: 9px;
+            border: 1px solid #607365;
+            background: transparent;
+            color: #dce8da;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 11px;
+            border-radius: 3px
+        }
+
+        .copy:hover {
+            background: #34453a
+        }
+
+        .callout {
+            border-left: 4px solid var(--orange);
+            background: #fff0e8;
+            padding: 14px 16px;
+            color: #70351e;
+            font-size: 14px;
+            margin: 20px 0
+        }
+
+        footer {
+            color: var(--muted);
+            font: 12px 'Segoe UI', Arial, sans-serif;
+            padding-top: 60px
+        }
+
+        @media(max-width:900px) {
+            .layout {
+                display: block
+            }
+
+            aside {
+                position: relative;
+                height: auto;
+                padding: 20px 5vw;
+                border-right: 0;
+                border-bottom: 1px solid var(--line)
+            }
+
+            nav {
+                display: flex;
+                gap: 4px;
+                overflow-x: auto
+            }
+
+            nav a {
+                white-space: nowrap
+            }
+
+            .main {
+                padding: 0 5vw 60px
+            }
+        }
+
+        @media(max-width:650px) {
+            .hero {
+                padding-top: 48px
+            }
+
+            .hero-grid,
+            .endpoint-body {
+                grid-template-columns: 1fr
+            }
+
+            .summary {
+                margin-left: 0;
+                width: 100%
+            }
+
+            h1 {
+                font-size: 50px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar"><strong>JOB PORTAL / API REFERENCE</strong><span>REST API · JSON · JWT</span><a
+            href="/api/jobs">Open API →</a></header>
+    <div class="layout">
+        <aside>
+            <div class="brand">Job <span>Portal</span></div>
+            <div class="side-note">A practical reference for the hiring platform API.<br>Base URL: <code>/api</code>
+            </div>
+            <nav aria-label="Documentation sections"><a href="#overview">Overview</a><a
+                    href="#auth">Authentication</a><a href="#users">Users</a><a href="#jobs">Jobs</a><a
+                    href="#companies">Companies</a><a href="#applications">Applications</a><a href="#admin">Admin</a><a
+                    href="#models">Models & errors</a></nav>
+        </aside>
+        <main class="main">
+            <section id="overview" class="hero" style="border:0;margin:0;padding-bottom:0">
+                <div class="eyebrow">Backend documentation · v1</div>
+                <h1>Hire better.<br><em>Build clearly.</em></h1>
+                <p class="lead">The Job Portal API connects candidates, recruiters and administrators through a focused
+                    REST surface. Every response is JSON and protected actions use a JWT bearer token.</p>
+                <div class="hero-grid">
+                    <div class="fact"><strong>Base URL</strong><small><code>http://localhost:5000/api</code></small>
+                    </div>
+                    <div class="fact"><strong>Content type</strong><small><code>application/json</code></small></div>
+                    <div class="fact"><strong>Auth</strong><small>JWT in the Authorization header</small></div>
+                    <div class="fact"><strong>Public first step</strong><small>Browse open jobs without a token</small>
+                    </div>
+                </div>
+            </section>
+            <section id="auth">
+                <h2>Authentication</h2>
+                <p class="section-intro">Register or log in, then send the returned token with protected requests.</p>
+                <div class="callout"><strong>Bearer format:</strong> <code>Authorization: Bearer &lt;token&gt;</code>.
+                    Roles are <code>CANDIDATE</code>, <code>RECRUITER</code> and <code>ADMIN</code>.</div>
+                <div class="endpoint">
+                    <div class="endpoint-head"><span class="method post">POST</span><span
+                            class="path">/api/auth/register</span><span class="summary">Create a candidate
+                            account</span></div>
+                    <div class="endpoint-body">
+                        <div>
+                            <p>Passwords must be at least 6 characters. Names must be at least 5 characters.</p>
+                            <div class="label">Body</div>
+                            <table>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Required</th>
+                                </tr>
+                                <tr>
+                                    <td>name</td>
+                                    <td>string</td>
+                                    <td>yes</td>
+                                </tr>
+                                <tr>
+                                    <td>email</td>
+                                    <td>email</td>
+                                    <td>yes</td>
+                                </tr>
+                                <tr>
+                                    <td>password</td>
+                                    <td>string</td>
+                                    <td>yes</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <pre><button class="copy">Copy</button>curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Aazad","email":"azad@example.com","password":"123456"}'</pre>
+                    </div>
+                </div>
+                <div class="endpoint">
+                    <div class="endpoint-head"><span class="method post">POST</span><span
+                            class="path">/api/auth/login</span><span class="summary">Get a JWT token</span></div>
+                    <div class="endpoint-body">
+                        <div>
+                            <p>Returns the authenticated user and a token valid for the configured JWT expiry.</p>
+                            <div class="label">Body</div>
+                            <table>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Required</th>
+                                </tr>
+                                <tr>
+                                    <td>email</td>
+                                    <td>email</td>
+                                    <td>yes</td>
+                                </tr>
+                                <tr>
+                                    <td>password</td>
+                                    <td>string</td>
+                                    <td>yes</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <pre><button class="copy">Copy</button>curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@example.com","password":"admin_password"}'</pre>
+                    </div>
+                </div>
+                <div class="endpoint">
+                    <div class="endpoint-head"><span class="method">GET</span><span
+                            class="path">/api/auth/profile</span><span class="badge">JWT</span><span
+                            class="summary">Read the current user</span></div>
+                    <div class="endpoint-body">
+                        <p>Returns the profile identified by the bearer token.</p>
+                        <pre><button class="copy">Copy</button>curl http://localhost:5000/api/auth/profile \
+  -H "Authorization: Bearer &lt;token&gt;"</pre>
+                    </div>
+                </div>
+            </section>
+            <section id="users">
+                <h2>Users</h2>
+                <p class="section-intro">User directory access is restricted to authenticated users.</p>
+                <div class="endpoint">
+                    <div class="endpoint-head"><span class="method">GET</span><span class="path">/api/users</span><span
+                            class="badge">JWT</span><span class="summary">List all users</span></div>
+                    <div class="endpoint-body">
+                        <p>Returns the user records available to the authenticated caller.</p>
+                        <pre><button class="copy">Copy</button>curl http://localhost:5000/api/users \
+  -H "Authorization: Bearer &lt;token&gt;"</pre>
+                    </div>
+                </div>
+            </section>
+            <section id="jobs">
+                <h2>Jobs</h2>
+                <p class="section-intro">Browse open jobs publicly. Recruiters manage jobs belonging to their own
+                    company.</p>
+                <div class="endpoint">
+                    <div class="endpoint-head"><span class="method">GET</span><span class="path">/api/jobs</span><span
+                            class="summary">List open jobs</span></div>
+                    <div class="endpoint-body">
+                        <div>
+                            <p>Results are newest first. Page defaults to 1 and limit to 10, capped at 100.</p>
+                            <div class="label">Query parameters</div>
+                            <table>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Description</th>
+                                </tr>
+                                <tr>
+                                    <td>page</td>
+                                    <td>Page number</td>
+                                </tr>
+                                <tr>
+                                    <td>limit</td>
+                                    <td>Results per page</td>
+                                </tr>
+                                <tr>
+                                    <td>search</td>
+                                    <td>Title contains this text</td>
+                                </tr>
+                                <tr>
+                                    <td>location</td>
+                                    <td>Location contains this text</td>
+                                </tr>
+                                <tr>
+                                    <td>jobType</td>
+                                    <td>FULL_TIME, PART_TIME, INTERNSHIP or CONTRACT</td>
+                                </tr>
+                                <tr>
+                                    <td>salaryMin</td>
+                                    <td>Minimum salary threshold</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <pre><button class="copy">Copy</button>curl "http://localhost:5000/api/jobs?page=1&amp;limit=10&amp;location=Remote"</pre>
+                    </div>
+                </div>
+                <div class="endpoint">
+                    <div class="endpoint-head"><span class="method post">POST</span><span
+                            class="path">/api/jobs</span><span class="badge">RECRUITER · JWT</span><span
+                            class="summary">Create a job</span></div>
+                    <div class="endpoint-body">
+                        <div>
+                            <p>The recruiter must own <code>companyId</code>. Status defaults to <code>OPEN</code>.</p>
+                            <div class="label">Body</div>
+                            <table>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Notes</th>
+                                </tr>
+                                <tr>
+                                    <td>title</td>
+                                    <td>string</td>
+                                    <td>Job title</td>
+                                </tr>
+                                <tr>
+                                    <td>description</td>
+                                    <td>string</td>
+                                    <td>Job description</td>
+                                </tr>
+                                <tr>
+                                    <td>companyId</td>
+                                    <td>integer</td>
+                                    <td>Owned company</td>
+                                </tr>
+                                <tr>
+                                    <td>location</td>
+                                    <td>string</td>
+                                    <td>Optional</td>
+                                </tr>
+                                <tr>
+                                    <td>salaryMin / salaryMax</td>
+                                    <td>integer</td>
+                                    <td>Optional</td>
+                                </tr>
+                                <tr>
+                                    <td>jobType</td>
+                                    <td>enum</td>
+                                    <td>FULL_TIME, PART_TIME, INTERNSHIP, CONTRACT</td>
+                                </tr>
+                                <tr>
+                                    <td>status</td>
+                                    <td>enum</td>
+                                    <td>DRAFT, OPEN, CLOSED</td>
+                                </tr>
+                                <tr>
+                                    <td>skills</td>
+                                    <td>string</td>
+                                    <td>Optional</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <pre><button class="copy">Copy</button>curl -X POST http://localhost:5000/api/jobs \
+  -H "Authorization: Bearer &lt;recruiter-token&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Backend Engineer","description":"Build APIs","companyId":1,"jobType":"FULL_TIME","status":"OPEN"}'</pre>
+                    </div>
+                </div>
+                <div class="endpoint">
+                    <div class="endpoint-head"><span class="method patch">PATCH</span><span
+                            class="path">/api/jobs/:id</span><span class="badge">RECRUITER · OWNER · JWT</span><span
+                            class="summary">Update a job</span></div>
+                    <div class="endpoint-body">
+                        <p>Accepts the same job fields as create. The recruiter must be authorized for the job.</p>
+                        <pre><button class="copy">Copy</button>curl -X PATCH http://localhost:5000/api/jobs/1 \
+  -H "Authorization: Bearer &lt;recruiter-token&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"CLOSED"}'</pre>
+                    </div>
+                </div>
+                <div class="endpoint">
+                    <div class="endpoint-head"><span class="method delete">DELETE</span><span
+                            class="path">/api/jobs/:id</span><span class="badge">RECRUITER · OWNER · JWT</span><span
+                            class="summary">Delete a job</span></div>
+                    <div class="endpoint-body">
+                        <p>Deletes the selected job and its related applications.</p>
+                        <pre><button class="copy">Copy</button>curl -X DELETE http://localhost:5000/api/jobs/1 \
+  -H "Authorization: Bearer &lt;recruiter-token&gt;"</pre>
+                    </div>
+                </div>
+            </section>
+            <section id="companies">
+                <h2>Companies</h2>
+                <p class="section-intro">A recruiter can own one company and create jobs for it.</p>
+                <div class="endpoint">
+                    <div class="endpoint-head"><span class="method post">POST</span><span
+                            class="path">/api/companies</span><span class="badge">RECRUITER · JWT</span><span
+                            class="summary">Create a company</span></div>
+                    <div class="endpoint-body">
+                        <div>
+                            <p>Creating a second company for the same recruiter returns <code>409</code>.</p>
+                            <div class="label">Body</div>
+                            <table>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Required</th>
+                                </tr>
+                                <tr>
+                                    <td>name</td>
+                                    <td>string</td>
+                                    <td>yes</td>
+                                </tr>
+                                <tr>
+                                    <td>description</td>
+                                    <td>string</td>
+                                    <td>no</td>
+                                </tr>
+                                <tr>
+                                    <td>website</td>
+                                    <td>string</td>
+                                    <td>no</td>
+                                </tr>
+                                <tr>
+                                    <td>location</td>
+                                    <td>string</td>
+                                    <td>no</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <pre><button class="copy">Copy</button>curl -X POST http://localhost:5000/api/companies \
+  -H "Authorization: Bearer &lt;recruiter-token&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Acme Labs","location":"Bengaluru","website":"https://acme.test"}'</pre>
+                    </div>
+                </div>
+            </section>
+            <section id="applications">
+                <h2>Applications</h2>
+                <p class="section-intro">Candidates can apply once to an open job.</p>
+                <div class="endpoint">
+                    <div class="endpoint-head"><span class="method post">POST</span><span
+                            class="path">/api/jobs/:jobId/apply</span><span class="badge">CANDIDATE · JWT</span><span
+                            class="summary">Apply for a job</span></div>
+                    <div class="endpoint-body">
+                        <div>
+                            <p>Applications are rejected when the job is missing, closed, or already applied to.</p>
+                            <div class="label">Body</div>
+                            <table>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Required</th>
+                                </tr>
+                                <tr>
+                                    <td>coverLetter</td>
+                                    <td>string</td>
+                                    <td>no</td>
+                                </tr>
+                                <tr>
+                                    <td>resumeUrl</td>
+                                    <td>string</td>
+                                    <td>no</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <pre><button class="copy">Copy</button>curl -X POST http://localhost:5000/api/jobs/1/apply \
+  -H "Authorization: Bearer &lt;candidate-token&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"coverLetter":"I would love to join your team.","resumeUrl":"https://files.test/resume.pdf"}'</pre>
+                    </div>
+                </div>
+            </section>
+            <section id="admin">
+                <h2>Admin</h2>
+                <p class="section-intro">Administrative operations require an admin JWT. The API can assign candidate or
+                    recruiter roles, but never admin.</p>
+                <div class="endpoint">
+                    <div class="endpoint-head"><span class="method patch">PATCH</span><span
+                            class="path">/api/admin/users/:userId/role</span><span class="badge">ADMIN · JWT</span><span
+                            class="summary">Change a user role</span></div>
+                    <div class="endpoint-body">
+                        <div>
+                            <div class="label">Body</div>
+                            <table>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Type</th>
+                                    <th>Allowed values</th>
+                                </tr>
+                                <tr>
+                                    <td>role</td>
+                                    <td>enum</td>
+                                    <td>CANDIDATE or RECRUITER</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <pre><button class="copy">Copy</button>curl -X PATCH http://localhost:5000/api/admin/users/2/role \
+  -H "Authorization: Bearer &lt;admin-token&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"role":"RECRUITER"}'</pre>
+                    </div>
+                </div>
+            </section>
+            <section id="models">
+                <h2>Models & errors</h2>
+                <p class="section-intro">Successful responses wrap data consistently. List jobs additionally returns
+                    pagination metadata.</p>
+                <div class="endpoint">
+                    <div class="endpoint-head"><span class="path">Success response</span><span class="summary">Common
+                            shape</span></div>
+                    <div class="endpoint-body">
+                        <pre>{
+  "success": true,
+  "message": "Operation completed successfully",
+  "data": { }
+}</pre>
+                        <pre>{
+  "success": true,
+  "message": "Jobs fetched successfully",
+  "data": [ ],
+  "pagination": {"page": 1, "limit": 10, "total": 0, "totalPages": 0, "hasNextPage": false, "hasPreviousPage": false}
+}</pre>
+                    </div>
+                </div>
+                <div class="endpoint">
+                    <div class="endpoint-head"><span class="path">Error response</span><span class="summary">Validation
+                            and API errors</span></div>
+                    <div class="endpoint-body">
+                        <pre>{
+  "success": false,
+  "message": "Wrong Credentials",
+  "data": null,
+  "validation": null
+}</pre>
+                        <div>
+                            <div class="label">Typical status codes</div>
+                            <table>
+                                <tr>
+                                    <td>201</td>
+                                    <td>Created or successful mutation</td>
+                                </tr>
+                                <tr>
+                                    <td>200</td>
+                                    <td>Successful read/update/delete</td>
+                                </tr>
+                                <tr>
+                                    <td>400</td>
+                                    <td>Invalid request or closed job</td>
+                                </tr>
+                                <tr>
+                                    <td>401</td>
+                                    <td>Missing/invalid credentials</td>
+                                </tr>
+                                <tr>
+                                    <td>403</td>
+                                    <td>Wrong role or ownership</td>
+                                </tr>
+                                <tr>
+                                    <td>404</td>
+                                    <td>Resource not found</td>
+                                </tr>
+                                <tr>
+                                    <td>409</td>
+                                    <td>Duplicate email/application/company</td>
+                                </tr>
+                                <tr>
+                                    <td>500</td>
+                                    <td>Unexpected server/database error</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <footer>Job Portal API · Express + Prisma + MySQL · Documentation served from <code>/</code></footer>
+        </main>
+    </div>
+    <script>document.querySelectorAll('.copy').forEach(button => { button.addEventListener('click', async () => { const code = button.parentElement.innerText.replace('Copy\n', ''); await navigator.clipboard.writeText(code); const old = button.textContent; button.textContent = 'Copied'; setTimeout(() => button.textContent = old, 1200) }) })</script>
+</body>
+
+</html>

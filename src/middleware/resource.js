@@ -1,30 +1,39 @@
 const prisma = require("../prisma");
 
-const loadJob = async (req, res, next) => {
+const loadResource = (model, paramName, resourceName) => {
 
-    try {
+    return async (req, res, next) => {
 
-        const job = await prisma.job.findUnique({
-            where: {
-                id: Number(req.params.id)
+        try {
+
+            const id = Number(req.params[paramName]);
+
+            if (!Number.isInteger(id)) {
+                const err = new Error(`Invalid ${resourceName} ID`);
+                err.statusCode = 400;
+                return next(err);
             }
-        });
 
-        if (!job) {
-            const err = new Error("Job not found");
-            err.statusCode = 404;
-            return next(err);
+            const resource = await prisma[model].findUnique({
+                where: {
+                    id
+                }
+            });
+
+            if (!resource) {
+                const err = new Error(`${resourceName} not found`);
+                err.statusCode = 404;
+                return next(err);
+            }
+
+            req.resource = resource;
+
+            next();
+
+        } catch (error) {
+            next(error);
         }
-
-        req.resource = job;
-
-        next();
-
-    } catch (error) {
-        next(error);
-    }
+    };
 };
 
-module.exports = {
-    loadJob
-};
+module.exports = {loadResource};

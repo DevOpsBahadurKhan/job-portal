@@ -35,6 +35,87 @@ const createCompanyService = async (companyData, ownerId) => {
     return company;
 };
 
+
+const getCompanyByIdService = async (companyId,userId) => {
+    const company = await prisma.company.findUnique({
+        where: {
+            id: Number(companyId),
+            ownerId: Number(userId)
+        }
+    });
+
+    if (!company) {
+        const err = new Error("Company not found");
+        err.statusCode = 404;
+        throw err;
+    }
+
+    return company;
+};
+
+
+const getMyCompanyService = async (ownerId) => {
+    const company = await prisma.company.findUnique({
+        where: {
+            ownerId
+        }
+    });
+
+    if (!company) {
+        const err = new Error("Company not found");
+        err.statusCode = 404;
+        throw err;
+    }
+
+    return company;
+}
+
+
+const updateCompanyService = async (companyId, ownerId, companyData) => {
+    const existingCompany = await prisma.company.findUnique({
+        where: {
+            id: Number(companyId)
+        }
+    });
+
+    if (!existingCompany) {
+        const err = new Error("Company not found");
+        err.statusCode = 404;
+        throw err;
+    }
+
+    if (existingCompany.ownerId !== ownerId) {
+        const err = new Error("You are not allowed to update this company");
+        err.statusCode = 403;
+        throw err;
+    }
+
+    const {
+        name,
+        description,
+        website,
+        location
+    } = companyData;
+
+    const company = await prisma.company.update({
+        where: {
+            id: Number(companyId)
+        },
+        data: {
+            name,
+            description,
+            website,
+            location
+        }
+    });
+
+    return company;
+};
+
 module.exports = {
-    createCompanyService
+    createCompanyService,
+    getMyCompanyService,
+    getCompanyByIdService,
+    updateCompanyService,
+
 };

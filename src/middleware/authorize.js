@@ -7,8 +7,22 @@ const authorize = (action, subjectName) => {
     return (req, res, next) => {
 
         try {
+
             const ability = defineAbility(req.user);
 
+            // CREATE / other actions without existing resource
+            if (action === "create") {
+
+                if (!ability.can(action, subjectName)) {
+                    const err = new Error("Access denied");
+                    err.statusCode = 403;
+                    return next(err);
+                }
+
+                return next();
+            }
+
+            // Existing resource required
             const resource = req.resource;
 
             if (!resource) {

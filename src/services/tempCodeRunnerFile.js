@@ -1,5 +1,3 @@
-const prisma = require("../prisma");
-
 const applyJobService = async (jobId, candidateId, applicationData) => {
 
     const { coverLetter, resumeUrl } = applicationData;
@@ -51,49 +49,4 @@ const applyJobService = async (jobId, candidateId, applicationData) => {
     });
 
     return application;
-};
-
-const getMyApplicationsService = async (candidateId) => {
-
-    const applications = await prisma.application.findMany({
-        where: {
-            candidateId
-        },
-        orderBy: {
-            createdAt: "desc"
-        },
-        include: {
-
-            job: {
-                select: {
-                    id: true,
-                    title: true,
-                    description: true,
-                    location: true,
-                    salaryMin: true,
-                    salaryMax: true,
-                    jobType: true,
-                    status: true,
-                    skills: true,
-
-                    company: {
-                        select: {
-                            id: true,
-                            name: true,
-                            location: true,
-                            website: true
-                        }
-                    }
-                }
-            }
-
-        }
-    });
-    return applications;
-}
-
-
-module.exports = {
-    applyJobService,
-    getMyApplicationsService,
 };

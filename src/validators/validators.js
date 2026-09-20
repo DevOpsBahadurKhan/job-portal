@@ -1,6 +1,6 @@
 // D: \14 - DevOps - batch\devOps - 14 - notes\job portal\src\validators\validators.js
 
-const { body } = require("express-validator");
+const { body, param } = require("express-validator");
 
 const isEmail = body("email")
     .trim()
@@ -21,8 +21,17 @@ const hasName = body("name")
     .isLength({ min: 5 })
     .withMessage("Name must be at least 5 characters");
 
+// updateUserRoleValidator
+const isInt = param("userId").isInt()
+    .withMessage("User ID must be a valid integer");
+const hasRole = body("role")
+    .isIn(["CANDIDATE", "RECRUITER"]).withMessage(
+        "Role must be CANDIDATE or RECRUITER");
+
 module.exports = {
     isEmail,
     hasPassword,
-    hasName
+    hasName,
+    isInt,
+    hasRole
 };
