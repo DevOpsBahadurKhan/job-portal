@@ -36,7 +36,7 @@ const createCompanyService = async (companyData, ownerId) => {
 };
 
 
-const getCompanyByIdService = async (companyId,userId) => {
+const getCompanyByIdService = async (companyId, userId) => {
     const company = await prisma.company.findUnique({
         where: {
             id: Number(companyId),
@@ -112,10 +112,17 @@ const updateCompanyService = async (companyId, ownerId, companyData) => {
     return company;
 };
 
+
+const listCompaniesService = async () => {
+    const companies = await prisma.company.findMany();
+    return companies;
+}
+
 module.exports = {
     createCompanyService,
     getMyCompanyService,
     getCompanyByIdService,
     updateCompanyService,
+    listCompaniesService,
 
 };

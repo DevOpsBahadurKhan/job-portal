@@ -3,13 +3,14 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
 }
 
 enum UserRole {
   CANDIDATE
   RECRUITER
   ADMIN
+  SUPER_ADMIN
 }
 
 enum JobType {
@@ -36,7 +37,7 @@ model User {
   id           Int           @id @default(autoincrement())
   name         String
   email        String        @unique
-  password     String
+  password     String?
   googleId     String?       @unique
   role         UserRole      @default(CANDIDATE)
   createdAt    DateTime      @default(now())
@@ -46,6 +47,8 @@ model User {
   jobs         Job[]
   applications Application[]
   refreshTokens RefreshToken[]
+  pushSubscriptions PushSubscription[]
+  notifications Notification[]
 
   @@index([role])
 }
@@ -120,4 +123,41 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+
+  userId    Int
+
+  endpoint  String   @db.Text
+  p256dh    String
+  auth      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+
+  userId    Int
+
+  title     String
+  message   String   @db.Text
+  url       String?
+  isRead    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead])
 }

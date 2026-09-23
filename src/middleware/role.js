@@ -1,8 +1,7 @@
 const authorize = (...allowedRoles) => {
     return (req, res, next) => {
-
-        console.log("ROLE:", req.user?.role);
-        console.log("NEXT:", typeof next);
+        const userRole = String(req.user?.role || "").toUpperCase();
+        const normalizedAllowedRoles = allowedRoles.map((role) => String(role).toUpperCase());
 
         if (!req.user) {
             const err = new Error("Authentication required");
@@ -10,7 +9,7 @@ const authorize = (...allowedRoles) => {
             throw err;
         }
 
-        if (!allowedRoles.includes(req.user.role)) {
+        if (!normalizedAllowedRoles.includes(userRole)) {
             const err = new Error("Access denied");
             err.statusCode = 403;
             throw err;

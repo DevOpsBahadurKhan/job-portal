@@ -3,14 +3,16 @@ const {
     updateJobService,
     deleteJobService,
     listJobService,
-    getJobByIdService
+    getJobByIdService,
+    getJobApplicationsService,
+    updateApplicationStatusService
 } = require("../services/job.service");
 
 const createJob = async (req, res, next) => {
     try {
 
-        
-      const id = Number(req.user.id)
+
+        const id = Number(req.user.id)
         const job = await createJobService(
             req.body,
             id,
@@ -99,7 +101,7 @@ const listJob = async (req, res, next) => {
     }
 }
 
-const getJobById= async (req, res, next) => {
+const getJobById = async (req, res, next) => {
     try {
         const jobId = Number(req.params.id);
         const job = await getJobByIdService(jobId);
@@ -116,7 +118,54 @@ const getJobById= async (req, res, next) => {
     }
 }
 
+const getJobApplications = async (req, res, next) => {
+    try {
+        const jobId = Number(req.params.id);
+        const recruiterId = Number(req.user.id);
+
+        const applications = await getJobApplicationsService(jobId, recruiterId);
+
+        res.status(200).json({
+            success: true,
+            message: "Applications fetched successfully",
+            data: applications
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const updateApplicationStatus = async (req, res, next) => {
+    try {
+        const jobId = Number(req.params.id);
+        const applicationId = Number(req.params.applicationId);
+        const recruiterId = Number(req.user.id);
+        const { status } = req.body;
+
+        const application = await updateApplicationStatusService({
+            jobId,
+            applicationId,
+            recruiterId,
+            status
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Application status updated successfully",
+            data: application
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 
 module.exports = {
-    createJob, updateJob, deleteJob, listJob, getJobById
+    createJob,
+    updateJob,
+    deleteJob,
+    listJob,
+    getJobById,
+    getJobApplications,
+    updateApplicationStatus
 };

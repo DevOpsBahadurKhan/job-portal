@@ -5,16 +5,31 @@ const register = async (req, res, next) => {
     try {
 
         const { name, email, password } = req.body;
-        const user = await authService.register(name, email, password);
+
+        const result = await authService.register(
+            name,
+            email,
+            password
+        );
+
+        // Set JWT in HttpOnly Cookie
+        res.cookie("accessToken", result.token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 15 * 60 * 1000
+        });
 
         res.status(201).json({
             success: true,
             message: "User created successfully",
-            data: user
+            data: result.user
         });
 
     } catch (error) {
+
         next(error);
+
     }
 };
 
@@ -30,10 +45,17 @@ const login = async (req, res, next) => {
             password
         );
 
+        res.cookie("accessToken", result.token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 15 * 60 * 1000
+        });
+
         res.status(201).json({
             success: true,
             message: "Login successful",
-            data: result
+            data: result.user
         });
 
     } catch (error) {
@@ -54,8 +76,21 @@ const me = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-}
+};
+
+const logout = (req, res) => {
+    res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax"
+    });
+
+    res.status(200).json({
+        success: true,
+        message: "Logout successful"
+    });
+};
 
 module.exports = {
-    register, login, me
+    register, login, me, logout
 };

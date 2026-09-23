@@ -24,22 +24,39 @@ const register = async (name, email, password) => {
         }
     });
 
+
+    // Generate JWT
+    const token = jwt.sign(
+        {
+            id: user.id,
+            role: String(user.role || "").toUpperCase()
+        },
+        process.env.JWT_SECRET,
+        {
+            expiresIn: process.env.JWT_EXPIRES_IN
+        }
+    );
+
+
     return {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
+        user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role
+        },
+        token
     };
 };
 
 const login = async (email, password) => {
-
+    console.log("DB QUERY START");
     const user = await prisma.user.findUnique({
         where: {
             email
         }
     });
-
+    console.log("DB QUERY END");
     if (!user) {
         let error = new Error("Wrong Credentials");
         error.statusCode = 401;
@@ -60,7 +77,7 @@ const login = async (email, password) => {
     const token = jwt.sign(
         {
             id: user.id,
-            role: user.role
+            role: String(user.role || "").toUpperCase()
         },
         process.env.JWT_SECRET,
         {
@@ -85,7 +102,7 @@ const me = async (userId) => {
         where: {
             id: userId
         },
-        select:{
+        select: {
             id: true,
             name: true,
             email: true,
