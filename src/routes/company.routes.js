@@ -9,7 +9,8 @@ const {
     createCompany,
     getMyCompany,
     getCompanyById,
-    updateCompany
+    updateCompany,
+    listCompanies
 } = require("../controllers/company.controller");
 
 
@@ -25,6 +26,9 @@ router.post(
     createCompany
 );
 
+router.get("/", passport.authenticate("jwt", {
+    session: false
+}), listCompanies);
 
 // Get My Company
 router.get(
@@ -32,6 +36,7 @@ router.get(
     passport.authenticate("jwt", {
         session: false
     }),
+    authorize("read", "Company"),
     getMyCompany
 );
 

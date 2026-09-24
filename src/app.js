@@ -1,19 +1,25 @@
-require("dotenv").config();
 const express = require("express");
 const path = require('path');
 const cors = require('cors');
+const cookieParser = require("cookie-parser");
 const app = express();
+
+
 
 // CORS
 app.use(
     cors({
-        origin: "http://localhost:3000",
+        origin: [
+            "http://localhost:3000",
+            "https://job-portal-frontend-4qqb4go2t-bk209203gmailcoms-projects.vercel.app"
+        ],
         credentials: true,
     })
 );
 
 // Body parser
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "./public")));
 
 // initialize passport
@@ -26,7 +32,7 @@ app.use("/api/jobs", require("./routes/job.routes"));
 app.use("/api/companies", require("./routes/company.routes"));
 app.use("/api", require("./routes/application.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
-
+app.use("/api/notifications", require("./routes/notification.routes"));
 
 
 // error handler

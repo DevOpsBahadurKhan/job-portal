@@ -2,8 +2,25 @@ const {
     createCompanyService,
     getMyCompanyService,
     getCompanyByIdService,
-    updateCompanyService
+    updateCompanyService,
+    listCompaniesService
 } = require("../services/company.service");
+
+
+const listCompanies = async (req, res, next) => {
+    try {
+        const companies = await listCompaniesService();
+
+        res.status(201).send({
+            success: true,
+            message: "Companies fetched successfully",
+            data: companies
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
 
 const createCompany = async (req, res, next) => {
     try {
@@ -44,7 +61,7 @@ const getMyCompany = async (req, res, next) => {
 
 const getCompanyById = async (req, res, next) => {
     try {
-        const company = await getCompanyByIdService(req.params.id,req.user.id);
+        const company = await getCompanyByIdService(req.params.id, req.user.id);
 
         return res.status(200).json({
             success: true,
@@ -62,6 +79,7 @@ const updateCompany = async (req, res, next) => {
         const company = await updateCompanyService(
             req.params.id,
             req.user.id,
+            req.user.role,
             req.body
         );
 
@@ -79,5 +97,6 @@ module.exports = {
     createCompany,
     getMyCompany,
     getCompanyById,
-    updateCompany
+    updateCompany,
+    listCompanies
 };

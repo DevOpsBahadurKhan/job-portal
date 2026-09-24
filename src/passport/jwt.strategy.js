@@ -1,42 +1,48 @@
 const passport = require("passport");
 const passportJwt = require("passport-jwt");
+
 const prisma = require("../prisma");
 
 const { Strategy, ExtractJwt } = passportJwt;
 
-const params = {
-    secretOrKey: process.env.JWT_SECRET,
-    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
+
+// Cookie se JWT nikalne ke liye
+const cookieExtractor = (req) => {
+    return req.cookies?.accessToken || null;
 };
 
-const strategy = new Strategy(
-    params,
-    async (payload, done) => {
-        try {
-            const user = await prisma.user.findUnique({
-                where: {
-                    id: payload.id
-                },
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    role: true
-                }
-            });
+const params = {
+    secretOrKey: process.env.JWT_SECRET,
+    jwtFromRequest: cookieExtractor
+};
 
-            if (!user) {
-                return done(null, false);
+
+const strategy = new Strategy(params, async (payload, done) => {
+
+    try {
+
+        const user = await prisma.user.findUnique({
+
+            where: { id: payload.id },
+            select: {
+                id: true, name: true, email: true, role: true
             }
 
-            return done(null, user);
+        });
 
-        } catch (error) {
-            return done(error, false);
+        if (!user) {
+            return done(null, false);
         }
+        return done(null, user);
+
+    } catch (error) {
+        return done(error, false);
     }
+}
 );
 
-passport.use("jwt", strategy); 
+
+passport.use("jwt", strategy);
+
 
 module.exports = strategy;

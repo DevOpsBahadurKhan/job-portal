@@ -36,7 +36,7 @@ const createCompanyService = async (companyData, ownerId) => {
 };
 
 
-const getCompanyByIdService = async (companyId,userId) => {
+const getCompanyByIdService = async (companyId, userId) => {
     const company = await prisma.company.findUnique({
         where: {
             id: Number(companyId),
@@ -71,7 +71,8 @@ const getMyCompanyService = async (ownerId) => {
 }
 
 
-const updateCompanyService = async (companyId, ownerId, companyData) => {
+const updateCompanyService = async (companyId, userId, userRole, companyData) => {
+
     const existingCompany = await prisma.company.findUnique({
         where: {
             id: Number(companyId)
@@ -84,7 +85,8 @@ const updateCompanyService = async (companyId, ownerId, companyData) => {
         throw err;
     }
 
-    if (existingCompany.ownerId !== ownerId) {
+    // Owner OR Super Admin can update
+    if (existingCompany.ownerId !== userId && userRole !== "SUPER_ADMIN") {
         const err = new Error("You are not allowed to update this company");
         err.statusCode = 403;
         throw err;
@@ -112,10 +114,16 @@ const updateCompanyService = async (companyId, ownerId, companyData) => {
     return company;
 };
 
+const listCompaniesService = async () => {
+    const companies = await prisma.company.findMany();
+    return companies;
+}
+
 module.exports = {
     createCompanyService,
     getMyCompanyService,
     getCompanyByIdService,
     updateCompanyService,
+    listCompaniesService,
 
 };

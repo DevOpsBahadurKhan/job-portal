@@ -231,7 +231,7 @@ const getJobByIdService = async (jobId) => {
 
     const job = await prisma.job.findUnique({
         where: {
-            id:jobId
+            id: jobId
         }
     });
 
@@ -244,8 +244,140 @@ const getJobByIdService = async (jobId) => {
 
     return job;
 
-}
+};
 
+const getJobApplicationsService = async (jobId, recruiterId) => {
+    const job = await prisma.job.findUnique({
+        where: {
+            id: Number(jobId)
+        }
+    });
+
+    if (!job) {
+        const err = new Error("Job not found");
+        err.statusCode = 404;
+        throw err;
+    }
+
+    if (job.recruiterId !== Number(recruiterId)) {
+        const err = new Error("You can only view applications for your own jobs");
+        err.statusCode = 403;
+        throw err;
+    }
+
+    return prisma.application.findMany({
+        where: {
+            jobId: Number(jobId)
+        },
+        orderBy: {
+            createdAt: "desc"
+        },
+        include: {
+            candidate: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true
+                }
+            },
+            job: {
+                select: {
+                    id: true,
+                    title: true,
+                    location: true,
+                    company: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+};
+
+const updateApplicationStatusService = async ({
+    jobId,
+    applicationId,
+    recruiterId,
+    status
+}) => {
+    const job = await prisma.job.findUnique({
+        where: {
+            id: Number(jobId)
+        }
+    });
+
+    if (!job) {
+        const err = new Error("Job not found");
+        err.statusCode = 404;
+        throw err;
+    }
+
+    if (job.recruiterId !== Number(recruiterId)) {
+        const err = new Error("You can only update applications for your own jobs");
+        err.statusCode = 403;
+        throw err;
+    }
+
+    const application = await prisma.application.findUnique({
+        where: {
+            id: Number(applicationId)
+        }
+    });
+
+    if (!application) {
+        const err = new Error("Application not found");
+        err.statusCode = 404;
+        throw err;
+    }
+
+    if (application.jobId !== Number(jobId)) {
+        const err = new Error("Application does not belong to this job");
+        err.statusCode = 400;
+        throw err;
+    }
+
+    const allowedStatuses = ["APPLIED", "SHORTLISTED", "REJECTED", "HIRED"];
+
+    if (!allowedStatuses.includes(status)) {
+        const err = new Error("Invalid application status");
+        err.statusCode = 400;
+        throw err;
+    }
+
+    return prisma.application.update({
+        where: {
+            id: Number(applicationId)
+        },
+        data: {
+            status
+        },
+        include: {
+            candidate: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true
+                }
+            },
+            job: {
+                select: {
+                    id: true,
+                    title: true,
+                    company: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+};
 
 module.exports = {
     createJobService,
@@ -253,5 +385,6 @@ module.exports = {
     deleteJobService,
     listJobService,
     getJobByIdService,
-
+    getJobApplicationsService,
+    updateApplicationStatusService
 };
