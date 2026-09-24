@@ -11,7 +11,7 @@ app.use(
     cors({
         origin: [
             "http://localhost:3000",
-            "https://job-portal-frontend-4qqb4go2t-bk209203gmailcoms-projects.vercel.app"
+            "https://job-portal-frontend-mugaqcwxr-bk209203gmailcoms-projects.vercel.app"
         ],
         credentials: true,
     })
