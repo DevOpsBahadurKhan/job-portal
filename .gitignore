@@ -7,3 +7,4 @@ node_modules
 /job-portal.postman_collection.json
 
 //this is develop branch
+.neon

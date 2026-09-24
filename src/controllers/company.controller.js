@@ -79,6 +79,7 @@ const updateCompany = async (req, res, next) => {
         const company = await updateCompanyService(
             req.params.id,
             req.user.id,
+            req.user.role,
             req.body
         );
 

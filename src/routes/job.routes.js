@@ -18,6 +18,7 @@ const router = express.Router();
 // Get all jobs
 router.get("/", listJob);
 
+
 // Create job (recruiter only)
 router.post("/",
     passport.authenticate("jwt", {
@@ -27,6 +28,7 @@ router.post("/",
     authorize("create", "Job"),
     createJob
 );
+
 
 // Get job by ID
 router.get("/:id",

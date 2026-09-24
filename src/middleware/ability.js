@@ -116,6 +116,11 @@ const defineAbility = (user) => {
     if (normalizedRole === "SUPER_ADMIN") {
 
         can("manage", "all");
+        
+        // Admin cannot update himself
+        cannot("update", "User", {
+            id: user.id
+        });
     }
 
 

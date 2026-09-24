@@ -11,51 +11,34 @@ const cookieExtractor = (req) => {
     return req.cookies?.accessToken || null;
 };
 
-
 const params = {
     secretOrKey: process.env.JWT_SECRET,
-
     jwtFromRequest: cookieExtractor
 };
 
 
-const strategy = new Strategy(
-    params,
+const strategy = new Strategy(params, async (payload, done) => {
 
-    async (payload, done) => {
+    try {
 
-        try {
+        const user = await prisma.user.findUnique({
 
-            const user = await prisma.user.findUnique({
-
-                where: {
-                    id: payload.id
-                },
-
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    role: true
-                }
-
-            });
-
-
-            if (!user) {
-                return done(null, false);
+            where: { id: payload.id },
+            select: {
+                id: true, name: true, email: true, role: true
             }
 
+        });
 
-            return done(null, user);
-
-        } catch (error) {
-
-            return done(error, false);
-
+        if (!user) {
+            return done(null, false);
         }
+        return done(null, user);
 
+    } catch (error) {
+        return done(error, false);
     }
+}
 );
 
 

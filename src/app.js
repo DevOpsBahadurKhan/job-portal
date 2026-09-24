@@ -9,7 +9,10 @@ const app = express();
 // CORS
 app.use(
     cors({
-        origin: "http://localhost:3000",
+        origin: [
+            "http://localhost:3000",
+            "https://job-portal-frontend-4qqb4go2t-bk209203gmailcoms-projects.vercel.app"
+        ],
         credentials: true,
     })
 );
