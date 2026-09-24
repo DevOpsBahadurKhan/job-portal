@@ -7,12 +7,14 @@ const app = express();
 
 
 // CORS
+const allowedOrigins = [
+    "http://localhost:3000",
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(
     cors({
-        origin: [
-            "http://localhost:3000",
-            "https://job-portal-frontend-mugaqcwxr-bk209203gmailcoms-projects.vercel.app"
-        ],
+        origin: allowedOrigins,
         credentials: true,
     })
 );
