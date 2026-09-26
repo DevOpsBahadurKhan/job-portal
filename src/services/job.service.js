@@ -203,9 +203,7 @@ const listJobService = async ({
             }
         }),
 
-        prisma.job.count({
-            where
-        })
+        prisma.job.count()
 
     ]);
 

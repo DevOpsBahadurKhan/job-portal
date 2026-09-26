@@ -35,7 +35,9 @@ app.use("/api/companies", require("./routes/company.routes"));
 app.use("/api", require("./routes/application.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
 app.use("/api/notifications", require("./routes/notification.routes"));
-
+app.use("/api/auth", require("./routes/google.route"));
+app.use("/api/plans", require("./routes/plan.routes"));  
+app.use("/api/subscriptions", require("./routes/subscription.routes"));  
 
 // error handler
 app.use(require("./middleware/errorHandler"));

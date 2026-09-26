@@ -79,6 +79,7 @@ const me = async (req, res, next) => {
 };
 
 const logout = (req, res) => {
+    
     res.clearCookie("accessToken", {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",

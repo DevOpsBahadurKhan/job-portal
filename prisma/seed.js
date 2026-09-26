@@ -1,3 +1,4 @@
+
 require("dotenv").config();
 
 const bcrypt = require("bcrypt");
@@ -16,8 +17,8 @@ const seedAdmin = async () => {
 
     const existingAdmin = await prisma.user.findUnique({
         where: {
-            email: adminEmail
-        }
+            email: adminEmail,
+        },
     });
 
     if (existingAdmin) {
@@ -35,21 +36,69 @@ const seedAdmin = async () => {
             name: adminName,
             email: adminEmail,
             password: hashedPassword,
-            role: "ADMIN"
+            role: "ADMIN",
         },
         select: {
             id: true,
             name: true,
             email: true,
-            role: true
-        }
+            role: true,
+        },
     });
 
     console.log("Admin created successfully:");
     console.log(admin);
 };
 
-seedAdmin()
+// NEW: Seed subscription plans
+const seedPlans = async () => {
+    const plans = [
+        {
+            name: "FREE",
+            description: "Free plan for recruiters",
+            price: 0,
+            currency: "INR",
+            billingInterval: "MONTHLY",
+            maxActiveJobs: 1,
+        },
+        {
+            name: "STARTER",
+            description: "Starter plan for recruiters",
+            price: 99900,
+            currency: "INR",
+            billingInterval: "MONTHLY",
+            maxActiveJobs: 5,
+        },
+        {
+            name: "GROWTH",
+            description: "Growth plan for recruiters",
+            price: 249900,
+            currency: "INR",
+            billingInterval: "MONTHLY",
+            maxActiveJobs: 20,
+        },
+    ];
+
+    for (const plan of plans) {
+        await prisma.plan.upsert({
+            where: {
+                name: plan.name,
+            },
+            update: plan,
+            create: plan,
+        });
+    }
+
+    console.log("Subscription plans seeded successfully");
+};
+
+// Run both seed functions
+const main = async () => {
+    await seedAdmin();
+    await seedPlans();
+};
+
+main()
     .catch((error) => {
         console.error("Seed failed:", error);
         process.exit(1);

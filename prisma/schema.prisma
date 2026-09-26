@@ -22,6 +22,9 @@ model User {
   pushSubscriptions PushSubscription[]
   refreshTokens     RefreshToken[]
 
+  subscriptions Subscription[]
+  payments      Payment[]
+
   @@index([role])
 }
 
@@ -117,6 +120,86 @@ model Notification {
   @@index([userId, isRead])
 }
 
+model Payment {
+  id             Int  @id @default(autoincrement())
+  recruiterId    Int
+  subscriptionId Int?
+  jobId          Int?
+
+  amount   Int
+  currency String        @default("INR")
+  status   PaymentStatus @default(PENDING)
+
+  razorpayOrderId   String? @unique
+  razorpayPaymentId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recruiter    User          @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([recruiterId])
+  @@index([subscriptionId])
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+}
+
+model Plan {
+  id              Int     @id @default(autoincrement())
+  name            String  @unique
+  description     String?
+  price           Int
+  currency        String  @default("INR")
+  billingInterval String  @default("MONTHLY")
+  maxActiveJobs   Int
+  isActive        Boolean @default(true)
+
+  razorpayPlanId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id          Int @id @default(autoincrement())
+  recruiterId Int
+  planId      Int
+
+  status SubscriptionStatus @default(PENDING)
+
+  razorpaySubscriptionId String? @unique
+
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recruiter User      @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  plan      Plan      @relation(fields: [planId], references: [id])
+  payments  Payment[]
+
+  @@index([recruiterId, status])
+  @@index([planId])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
 enum UserRole {
   CANDIDATE
   RECRUITER
@@ -129,6 +212,7 @@ enum JobType {
   PART_TIME
   INTERNSHIP
   CONTRACT
+  REMOTE
 }
 
 enum JobStatus {
