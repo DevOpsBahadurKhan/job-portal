@@ -16,7 +16,10 @@ const register = async (req, res, next) => {
         res.cookie("accessToken", result.token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            sameSite:
+                process.env.NODE_ENV === "production"
+                    ? "none"
+                    : "lax",
             maxAge: 15 * 60 * 1000
         });
 
@@ -48,7 +51,10 @@ const login = async (req, res, next) => {
         res.cookie("accessToken", result.token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            sameSite:
+                process.env.NODE_ENV === "production"
+                    ? "none"
+                    : "lax",
             maxAge: 15 * 60 * 1000
         });
 
@@ -77,20 +83,27 @@ const me = async (req, res, next) => {
         next(error);
     }
 };
+const logout = (req, res, next) => {
+    try {
+        res.clearCookie("accessToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production", 
+            sameSite:
+                process.env.NODE_ENV === "production"
+                    ? "none"
+                    : "lax",
+            path: "/",
+        });
 
-const logout = (req, res) => {
-    
-    res.clearCookie("accessToken", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax"
-    });
-
-    res.status(200).json({
-        success: true,
-        message: "Logout successful"
-    });
+        return res.status(200).json({
+            success: true,
+            message: "Logout successful",
+        });
+    } catch (error) {
+        next(error);
+    }
 };
+
 
 module.exports = {
     register, login, me, logout

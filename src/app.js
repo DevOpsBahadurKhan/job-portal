@@ -14,9 +14,7 @@ const allowedOrigins = [
 
 const corsOptions = {
     origin: function (origin, callback) {
-        console.log("Incoming Origin:", origin);
-        console.log("Allowed Origins:", allowedOrigins);
-
+       
         // Allow requests without an Origin header (e.g. Postman)
         if (!origin || allowedOrigins.includes(origin)) {
             return callback(null, true);
@@ -45,7 +43,6 @@ const corsOptions = {
 
 // Apply CORS to all routes
 app.use(cors(corsOptions));
-
 // Handle CORS preflight requests
 app.options(/.*/, cors(corsOptions));
 
