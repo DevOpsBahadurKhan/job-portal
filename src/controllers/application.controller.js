@@ -5,13 +5,20 @@ const {
 
 const applyJob = async (req, res, next) => {
     try {
-
         const jobId = Number(req.params.jobId);
+        console.log(req.file);
+
+        const applicationData = {
+            ...req.body,
+            resumeUrl: req.file
+                ? `/uploads/resumes/${req.file.filename}`
+                : null
+        };
 
         const application = await applyJobService(
             jobId,
             req.user.id,
-            req.body
+            applicationData
         );
 
         res.status(201).send({
@@ -24,7 +31,6 @@ const applyJob = async (req, res, next) => {
         next(error);
     }
 };
-
 
 const getMyApplications = async (req, res, next) => {
     try {

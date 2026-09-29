@@ -1,7 +1,29 @@
 const prisma = require("../prisma");
 
-const applyJobService = async (jobId, candidateId, applicationData) => {
 
+
+const getHasAppliedService = async (jobId, candidateId) => {
+    const application = await prisma.application.findUnique({
+        where: {
+            jobId_candidateId: {
+                jobId: Number(jobId),
+                candidateId: Number(candidateId)
+            }
+        },
+        select: {
+            id: true
+        }
+    });
+
+    return !!application;
+};
+
+
+const applyJobService = async (
+    jobId,
+    candidateId,
+    applicationData
+) => {
     const { coverLetter, resumeUrl } = applicationData;
 
     // Check job exists
@@ -19,28 +41,33 @@ const applyJobService = async (jobId, candidateId, applicationData) => {
 
     // Check job is open
     if (job.status !== "OPEN") {
-        const err = new Error("This job is not open for applications");
+        const err = new Error(
+            "This job is not open for applications"
+        );
         err.statusCode = 400;
         throw err;
     }
 
     // Check candidate already applied
-    const existingApplication = await prisma.application.findUnique({
-        where: {
-            jobId_candidateId: {
-                jobId,
-                candidateId
+    const existingApplication =
+        await prisma.application.findUnique({
+            where: {
+                jobId_candidateId: {
+                    jobId,
+                    candidateId
+                }
             }
-        }
-    });
+        });
 
     if (existingApplication) {
-        const err = new Error("You have already applied for this job");
+        const err = new Error(
+            "You have already applied for this job"
+        );
         err.statusCode = 409;
         throw err;
     }
 
-    // Create application
+    // Create application with uploaded resume
     const application = await prisma.application.create({
         data: {
             coverLetter,

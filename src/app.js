@@ -6,6 +6,9 @@ const cookieParser = require("cookie-parser");
 
 const app = express();
 
+// 1. Security headers
+app.use(require("helmet")());
+
 // CORS Configuration
 const allowedOrigins = [
     "http://localhost:3000",
@@ -14,8 +17,6 @@ const allowedOrigins = [
 
 const corsOptions = {
     origin: function (origin, callback) {
-       
-        // Allow requests without an Origin header (e.g. Postman)
         if (!origin || allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
@@ -38,6 +39,7 @@ const corsOptions = {
     allowedHeaders: [
         "Content-Type",
         "Authorization",
+        "X-CSRF-Token",
     ],
 };
 
@@ -52,7 +54,7 @@ app.use(cookieParser());
 
 // Static files
 app.use(
-    express.static(path.join(__dirname, "./public"))
+    express.static(path.join(__dirname, "../public"))
 );
 
 // Initialize Passport
@@ -63,12 +65,13 @@ app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/users", require("./routes/user.routes"));
 app.use("/api/jobs", require("./routes/job.routes"));
 app.use("/api/companies", require("./routes/company.routes"));
-app.use("/api", require("./routes/application.routes"));
+app.use("/api/application", require("./routes/application.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
 app.use("/api/notifications", require("./routes/notification.routes"));
 app.use("/api/auth", require("./routes/google.route"));
 app.use("/api/plans", require("./routes/plan.routes"));
 app.use("/api/subscriptions", require("./routes/subscription.routes"));
+app.use("/api/auth", require("./routes/csrf.routes"));
 
 // Error handler (must be last)
 app.use(require("./middleware/errorHandler"));

@@ -1,22 +1,25 @@
 const express = require("express");
 const passport = require("../passport");
 const jwt = require("jsonwebtoken");
+const { googleOAuthLimiter } = require("../middleware/rateLimiter");
 
 const router = express.Router();
 
 // Start Google OAuth
 router.get(
     "/google",
+    googleOAuthLimiter,
     passport.authenticate("google", {
         scope: ["profile", "email"],
         session: false,
     })
 );
 
-// Google callback
+
 // Google callback
 router.get(
     "/google/callback",
+    googleOAuthLimiter,
     passport.authenticate("google", {
         session: false,
         failureRedirect: `${process.env.FRONTEND_URL}/login`,
@@ -49,7 +52,7 @@ router.get(
 
         // Redirect without token in URL
         res.redirect(`${process.env.FRONTEND_URL}/jobs`);
-       
+
     }
 );
 

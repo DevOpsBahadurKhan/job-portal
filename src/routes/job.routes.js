@@ -24,7 +24,6 @@ router.post("/",
     passport.authenticate("jwt", {
         session: false
     }),
-
     authorize("create", "Job"),
     createJob
 );

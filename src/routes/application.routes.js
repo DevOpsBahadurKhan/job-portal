@@ -3,7 +3,7 @@ const router = express.Router();
 
 const passport = require("../passport");
 const authorize = require("../middleware/authorize");
-
+const upload = require("../middleware/upload");
 const {
     applyJob,
     getMyApplications
@@ -13,11 +13,19 @@ const {
 
 // Apply for Job
 router.post(
-    "/jobs/:jobId/apply",
+    "/:jobId/apply",
     passport.authenticate("jwt", {
         session: false
     }),
     authorize("create", "Application"),
+
+    (req, res, next) => {
+        req.uploadFolder = "resumes";
+        req.allowedMimeTypes = ["application/pdf"];
+        next();
+    },
+
+    upload.single("file"),
     applyJob
 );
 
