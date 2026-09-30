@@ -600,7 +600,7 @@ email/password
   ↓
 find User
   ↓
-bcrypt.compare
+bcrypt.verify
   ↓
 generate JWT
   ↓

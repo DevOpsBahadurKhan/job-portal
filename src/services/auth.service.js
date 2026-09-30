@@ -1,4 +1,4 @@
-const bcrypt = require("bcrypt");
+const bcrypt = require("argon2");
 const jwt = require("jsonwebtoken");
 const prisma = require("../prisma");
 const redis = require("../config/redis");
@@ -29,7 +29,7 @@ const register = async (name, email, password) => {
         throw new Error("Email already registered");
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 123456789);
 
     const user = await prisma.user.create({
         data: {
@@ -68,9 +68,9 @@ const login = async (email, password) => {
         throw error;
     }
 
-    const validPassword = await bcrypt.compare(
+    const validPassword = await bcrypt.verify(
+        user.password,
         password,
-        user.password
     );
 
     if (!validPassword) {
