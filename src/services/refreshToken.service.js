@@ -6,19 +6,30 @@ const {
 } = require("../utils/refreshToken");
 
 // CREATE REFRESH TOKEN
-const createRefreshToken = async (userId) => {
+const createRefreshToken = async (userId, rememberMe = false) => {
     const token = generateRefreshToken();
     const tokenHash = hashRefreshToken(token);
 
     const expiresAt = new Date(
-        Date.now() + 7 * 24 * 60 * 60 * 1000
+        Date.now() +
+        (rememberMe
+            ? 30 * 24 * 60 * 60 * 1000
+            : 24 * 60 * 60 * 1000)
     );
+
+    // const expiresAt = new Date(
+    //     Date.now() +
+    //     (rememberMe
+    //         ? 1 * 60 * 1000   // 1 minute
+    //         : 1 * 60 * 1000)   // 1 minute
+    // );
 
     await prisma.refreshToken.create({
         data: {
             tokenHash,
             expiresAt,
             userId,
+            rememberMe,
         },
     });
 
@@ -35,14 +46,15 @@ const rotateRefreshToken = async (rawToken) => {
 
     const tokenHash = hashRefreshToken(rawToken);
 
-    const existingToken = await prisma.refreshToken.findUnique({
-        where: {
-            tokenHash,
-        },
-        include: {
-            user: true,
-        },
-    });
+    const existingToken =
+        await prisma.refreshToken.findUnique({
+            where: {
+                tokenHash,
+            },
+            include: {
+                user: true,
+            },
+        });
 
     if (
         !existingToken ||
@@ -59,19 +71,30 @@ const rotateRefreshToken = async (rawToken) => {
     const newTokenHash = hashRefreshToken(newRefreshToken);
 
     const expiresAt = new Date(
-        Date.now() + 7 * 24 * 60 * 60 * 1000
+        Date.now() +
+        (existingToken.rememberMe
+            ? 30 * 24 * 60 * 60 * 1000
+            : 24 * 60 * 60 * 1000)
     );
 
+    // const expiresAt = new Date(
+    //     Date.now() +
+    //     (existingToken.rememberMe
+    //         ? 1 * 60 * 1000
+    //         : 1 * 60 * 1000)
+    // );
+
     await prisma.$transaction(async (tx) => {
-        const deleted = await tx.refreshToken.deleteMany({
-            where: {
-                id: existingToken.id,
-                tokenHash,
-                expiresAt: {
-                    gt: new Date(),
+        const deleted =
+            await tx.refreshToken.deleteMany({
+                where: {
+                    id: existingToken.id,
+                    tokenHash,
+                    expiresAt: {
+                        gt: new Date(),
+                    },
                 },
-            },
-        });
+            });
 
         if (deleted.count !== 1) {
             const error = new Error(
@@ -86,6 +109,7 @@ const rotateRefreshToken = async (rawToken) => {
                 tokenHash: newTokenHash,
                 expiresAt,
                 userId: existingToken.userId,
+                rememberMe: existingToken.rememberMe,
             },
         });
     });
@@ -93,6 +117,7 @@ const rotateRefreshToken = async (rawToken) => {
     return {
         refreshToken: newRefreshToken,
         user: existingToken.user,
+        rememberMe: existingToken.rememberMe,
     };
 };
 

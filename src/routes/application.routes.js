@@ -6,7 +6,9 @@ const authorize = require("../middleware/authorize");
 const upload = require("../middleware/upload");
 const {
     applyJob,
-    getMyApplications
+    getMyApplications,
+    updateRecruiterApplicationStatus,
+    getRecruiterApplications,
 } = require("../controllers/application.controller");
 
 
@@ -37,6 +39,23 @@ router.get(
         session: false
     }),
     getMyApplications
+);
+
+router.patch(
+    "/recruiter/:applicationId/status",
+    passport.authenticate("jwt", {
+        session: false,
+    }),
+    updateRecruiterApplicationStatus
+);
+
+
+router.get(
+    "/recruiter",
+    passport.authenticate("jwt", {
+        session: false,
+    }),
+    getRecruiterApplications
 );
 
 

@@ -1,5 +1,8 @@
 const {
-    applyJobService, getMyApplicationsService
+    applyJobService,
+    getMyApplicationsService,
+    getRecruiterApplicationsService,
+    updateRecruiterApplicationStatusService
 } = require("../services/application.service");
 
 
@@ -52,6 +55,72 @@ const getMyApplications = async (req, res, next) => {
     }
 };
 
+
+
+const getRecruiterApplications = async (req, res, next) => {
+    try {
+        if (req.user.role !== "RECRUITER" ) {
+            const error = new Error(
+                "Only recruiters can view received applications"
+            );
+            error.statusCode = 403;
+            throw error;
+        }
+
+        const applications =
+            await getRecruiterApplicationsService(req.user.id);
+
+        return res.status(200).json({
+            success: true,
+            message: "Recruiter applications fetched successfully",
+            data: applications,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+const updateRecruiterApplicationStatus = async (req, res, next) => {
+    try {
+        if (req.user.role !== "RECRUITER") {
+            const error = new Error(
+                "Only recruiters can update application status"
+            );
+            error.statusCode = 403;
+            throw error;
+        }
+
+        const applicationId = Number(req.params.applicationId);
+        const { status } = req.body;
+
+        if (!Number.isInteger(applicationId) || applicationId <= 0) {
+            const error = new Error("Invalid application ID");
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const application =
+            await updateRecruiterApplicationStatusService(
+                applicationId,
+                req.user.id,
+                status
+            );
+
+        return res.status(200).json({
+            success: true,
+            message: "Application status updated successfully",
+            data: application,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 module.exports = {
-    applyJob, getMyApplications
+    applyJob,
+    getRecruiterApplications,
+    getMyApplications,
+    updateRecruiterApplicationStatus
 };

@@ -2,7 +2,7 @@ const rateLimit = require("express-rate-limit");
 
 const loginLimiter = rateLimit({
     windowMs: 5 * 60 * 1000,
-    limit: 5,
+    limit: 10,
     keyGenerator: (req) => {
         return req.body?.email?.toLowerCase().trim() || req.ip;
     },
@@ -23,7 +23,7 @@ const loginLimiter = rateLimit({
 
 const googleOAuthLimiter = rateLimit({
     windowMs: 5 * 60 * 1000,
-    limit: 2,
+    limit: 5,
 
     // Default IP-based key; no email required
     standardHeaders: "draft-8",

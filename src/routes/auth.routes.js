@@ -3,7 +3,16 @@ const { isEmail, hasPassword, hasName } = require('../validators/validators');
 const passport = require("../passport");
 const { doubleCsrfProtection, generateToken } = require('../middleware/csrf');
 const validationHnadler = require("../validators/validationHnadler");
-const { register, login, me, refresh, logout } = require("../controllers/auth.controller");
+const {
+    register,
+    login,
+    me,
+    refresh,
+    logout,
+    forgotPassword,
+    resetPassword
+} = require("../controllers/auth.controller");
+
 const { loginLimiter } = require("../middleware/rateLimiter");
 
 
@@ -43,6 +52,20 @@ router.post(
     refresh
 );
 
+
+router.post(
+    "/forgot-password",
+    loginLimiter,
+    [isEmail],
+    validationHnadler,
+    forgotPassword
+);
+
+router.post(
+    "/reset-password",
+    loginLimiter,
+    resetPassword
+);
 
 
 module.exports = router;

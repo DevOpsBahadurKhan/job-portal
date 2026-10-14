@@ -3,7 +3,9 @@ const {
     getMyCompanyService,
     getCompanyByIdService,
     updateCompanyService,
-    listCompaniesService
+    listCompaniesService,
+    deleteCompanyByIdService,
+    getTopCompaniesService
 } = require("../services/company.service");
 
 
@@ -72,6 +74,22 @@ const getCompanyById = async (req, res, next) => {
         next(error);
     }
 };
+const deleteCompanyById = async (req, res, next) => {
+    try {
+        const company = await deleteCompanyByIdService(
+            req.params.id,
+            req.user.id
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Company deleted successfully",
+            data: company,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 
 const updateCompany = async (req, res, next) => {
@@ -93,10 +111,35 @@ const updateCompany = async (req, res, next) => {
     }
 };
 
+
+const getTopCompanies = async (req, res, next) => {
+    try {
+        console.log("🔥 TOP COMPANIES CONTROLLER HIT");
+
+        const requestedLimit = Number(req.query.limit ?? 5);
+        const limit = Number.isInteger(requestedLimit)
+            ? Math.min(Math.max(requestedLimit, 1), 20)
+            : 5;
+
+        const companies = await getTopCompaniesService(limit);
+
+        return res.status(200).json({
+            success: true,
+            message: "Top companies fetched successfully",
+            data: companies,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 module.exports = {
     createCompany,
     getMyCompany,
     getCompanyById,
     updateCompany,
-    listCompanies
+    listCompanies,
+    deleteCompanyById,
+    getTopCompanies
 };

@@ -54,6 +54,26 @@ const getCompanyByIdService = async (companyId, userId) => {
 };
 
 
+const deleteCompanyByIdService = async (companyId, userId) => {
+    const company = await prisma.company.findFirst({
+        where: {
+            id: Number(companyId),
+            ownerId: Number(userId),
+        },
+    });
+
+    if (!company) {
+        const err = new Error("Company not found");
+        err.statusCode = 404;
+        throw err;
+    }
+
+    return prisma.company.delete({
+        where: { id: company.id },
+    });
+};
+
+
 const getMyCompanyService = async (ownerId) => {
     const company = await prisma.company.findUnique({
         where: {
@@ -119,11 +139,47 @@ const listCompaniesService = async () => {
     return companies;
 }
 
+
+const getTopCompaniesService = async (limit = 5) => {
+    const companies = await prisma.company.findMany({
+        take: limit,
+        select: {
+            id: true,
+            name: true,
+            description: true,
+            website: true,
+            location: true,
+            _count: {
+                select: {
+                    jobs: {
+                        where: { status: "OPEN" },
+                    },
+                },
+            },
+        },
+    });
+
+    return companies
+        .map((company) => ({
+            id: company.id,
+            name: company.name,
+            description: company.description,
+            website: company.website,
+            location: company.location,
+            openJobsCount: company._count.jobs,
+        }))
+        .sort((a, b) => b.openJobsCount - a.openJobsCount)
+        .slice(0, limit);
+};
+
+
 module.exports = {
     createCompanyService,
     getMyCompanyService,
     getCompanyByIdService,
     updateCompanyService,
     listCompaniesService,
+    deleteCompanyByIdService,
+    getTopCompaniesService
 
 };

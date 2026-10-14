@@ -1,18 +1,13 @@
 const { subject } = require("@casl/ability");
-
 const defineAbility = require("./ability");
 
 const authorize = (action, subjectName) => {
-
     return (req, res, next) => {
-
         try {
-
             const ability = defineAbility(req.user);
 
-            // CREATE / other actions without existing resource
-            if (action === "create") {
-
+            // Routes without a preloaded resource, such as /me
+            if (!req.resource) {
                 if (!ability.can(action, subjectName)) {
                     const err = new Error("Access denied");
                     err.statusCode = 403;
@@ -22,18 +17,9 @@ const authorize = (action, subjectName) => {
                 return next();
             }
 
-            // Existing resource required
-            const resource = req.resource;
-
-            if (!resource) {
-                const err = new Error("Resource not found");
-                err.statusCode = 404;
-                return next(err);
-            }
-
             const resourceSubject = subject(
                 subjectName,
-                resource
+                req.resource
             );
 
             if (!ability.can(action, resourceSubject)) {
@@ -43,7 +29,6 @@ const authorize = (action, subjectName) => {
             }
 
             next();
-
         } catch (error) {
             next(error);
         }

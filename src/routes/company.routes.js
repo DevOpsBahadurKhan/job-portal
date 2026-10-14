@@ -1,3 +1,4 @@
+
 const express = require("express");
 const router = express.Router();
 
@@ -10,58 +11,69 @@ const {
     getMyCompany,
     getCompanyById,
     updateCompany,
-    listCompanies
+    listCompanies,
+    deleteCompanyById,
+    getTopCompanies,
 } = require("../controllers/company.controller");
 
+const authenticate = passport.authenticate("jwt", {
+    session: false,
+});
 
-
-
-// Create Company
-router.post(
+// 1. List companies
+router.get(
     "/",
-    passport.authenticate("jwt", {
-        session: false
-    }),
-    authorize("create", "Company"),
-    createCompany
+    authenticate,
+    listCompanies
 );
 
-router.get("/", passport.authenticate("jwt", {
-    session: false
-}), listCompanies);
-
-// Get My Company
+// 2. Get logged-in user's company
 router.get(
     "/me",
-    passport.authenticate("jwt", {
-        session: false
-    }),
+    authenticate,
     authorize("read", "Company"),
     getMyCompany
 );
 
+// 3. Get top companies
+router.get(
+    "/top",
+    getTopCompanies
+);
 
-// Get Company By ID
+// 4. Get company by ID
 router.get(
     "/:id",
-    passport.authenticate("jwt", {
-        session: false
-    }),
-
+    authenticate,
+    loadResource("company", "id", "Company"),
+    authorize("read", "Company"),
     getCompanyById
 );
 
+// 5. Delete company by ID
+router.delete(
+    "/:id",
+    authenticate,
+    loadResource("company", "id", "Company"),
+    authorize("delete", "Company"),
+    deleteCompanyById
+);
 
-// Update Company
+// 6. Create company
+router.post(
+    "/",
+    authenticate,
+    authorize("create", "Company"),
+    createCompany
+);
+
+// 7. Update company by ID
 router.patch(
     "/:id",
-    passport.authenticate("jwt", {
-        session: false
-    }),
+    authenticate,
     loadResource("company", "id", "Company"),
     authorize("update", "Company"),
     updateCompany
 );
-
 
 module.exports = router;

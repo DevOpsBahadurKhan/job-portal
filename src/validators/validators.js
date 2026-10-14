@@ -3,16 +3,51 @@
 const { body, param } = require("express-validator");
 
 const isEmail = body("email")
-    .trim()
-    .isEmail()
-    .withMessage("Please provide a valid email");
-
-const hasPassword = body("password")
+    .exists()
+    .withMessage("Email is required")
+    .bail()
+    .isString()
+    .withMessage("Email must be a string")
+    .bail()
     .trim()
     .notEmpty()
-    .withMessage("Password is required")
-    .isLength({ min: 6 })
-    .withMessage("Password must be at least 6 characters");
+    .withMessage("Email is required")
+    .bail()
+    .isLength({ max: 254 })
+    .withMessage("Email must not exceed 254 characters")
+    .bail()
+    .isEmail({
+        allow_display_name: false,
+        require_display_name: false,
+        allow_utf8_local_part: false,
+        require_tld: true,
+    })
+    .withMessage("Enter a valid email address")
+    .bail()
+    .normalizeEmail();
+
+
+const hasPassword = body("password")
+    .notEmpty()
+    .withMessage("Password is required.")
+    // .bail()
+    // .isString()
+    // .withMessage("Password must be a string.")
+    .bail()
+    .isLength({ min: 6, max: 128 })
+    .withMessage("Password must be between 8 and 128 characters.")
+    // .bail()
+    // .matches(/[a-z]/)
+    // .withMessage("Password must contain a lowercase letter.")
+    // .bail()
+    // .matches(/[A-Z]/)
+    // .withMessage("Password must contain an uppercase letter.")
+    // .bail()
+    // .matches(/[0-9]/)
+    // .withMessage("Password must contain a number.")
+    // .bail()
+    // .matches(/[^A-Za-z0-9]/)
+    // .withMessage("Password must contain a special character.")
 
 const hasName = body("name")
     .trim()

@@ -6,27 +6,263 @@ datasource db {
   provider = "postgresql"
 }
 
+// =========================
+// USER & CANDIDATE PROFILE
+// =========================
+
 model User {
-  id                Int                @id @default(autoincrement())
-  name              String
-  email             String             @unique
-  password          String?
-  googleId          String?            @unique
-  role              UserRole           @default(CANDIDATE)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String?
+  googleId  String?  @unique
+  role      UserRole @default(CANDIDATE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  candidateProfile  CandidateProfile?
   applications      Application[]
   company           Company?
   jobs              Job[]
   notifications     Notification[]
   pushSubscriptions PushSubscription[]
   refreshTokens     RefreshToken[]
+  subscriptions     Subscription[]
+  payments          Payment[]
 
-  subscriptions Subscription[]
-  payments      Payment[]
+  userSubscriptions Subscription[] @relation("UserSaaSSubscriptions")
+  usageRecords      UsageRecord[]
+  passwordResetTokens PasswordResetToken[]
 
   @@index([role])
 }
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique @db.VarChar(64)
+  userId    Int
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model CandidateProfile {
+  id     Int @id @default(autoincrement())
+  userId Int @unique
+
+  phone     String?
+  avatarUrl String?
+  headline  String?
+  summary   String?
+  location  String?
+
+  preferredRoles     String[]  @default([])
+  preferredLocations String[]  @default([])
+  preferredJobTypes  JobType[] @default([])
+
+  expectedSalaryMin Int?
+  expectedSalaryMax Int?
+  noticePeriod      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experiences     Experience[]
+  educations      Education[]
+  candidateSkills CandidateSkill[]
+  resumes         Resume[]
+
+  @@index([location])
+}
+
+// =========================
+// EXPERIENCE
+// =========================
+
+model Experience {
+  id        Int @id @default(autoincrement())
+  profileId Int
+
+  companyName    String
+  jobTitle       String
+  employmentType String?
+  location       String?
+  description    String?
+
+  startDate DateTime
+  endDate   DateTime?
+  isCurrent Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+// =========================
+// EDUCATION
+// =========================
+
+model Education {
+  id        Int @id @default(autoincrement())
+  profileId Int
+
+  institution  String
+  degree       String?
+  fieldOfStudy String?
+  grade        String?
+  startDate    DateTime?
+  endDate      DateTime?
+  description  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+// =========================
+// SKILLS
+// =========================
+
+model Skill {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  candidates CandidateSkill[]
+
+  @@index([name])
+}
+
+model CandidateSkill {
+  id        Int @id @default(autoincrement())
+  profileId Int
+  skillId   Int
+
+  proficiency       SkillLevel?
+  yearsOfExperience Int?
+
+  profile CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  skill   Skill            @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, skillId])
+  @@index([skillId])
+}
+
+// =========================
+// RESUME
+// =========================
+
+model Resume {
+  id        Int @id @default(autoincrement())
+  profileId Int
+
+  fileName String
+  fileUrl  String
+  fileType String?
+  fileSize Int?
+
+  extractedText String?      @db.Text
+  status        ResumeStatus @default(UPLOADED)
+
+  isDefault Boolean @default(false)
+
+  uploadedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  profile CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  analyses   ResumeAnalysis[]
+  jobMatches ResumeJobMatch[]
+
+  @@index([profileId])
+  @@index([status])
+}
+
+// =========================
+// RESUME ANALYSIS
+// =========================
+
+model ResumeAnalysis {
+  id       Int @id @default(autoincrement())
+  resumeId Int
+
+  overallScore Int?
+  atsScore     Int?
+
+  summary String? @db.Text
+
+  strengths   Json?
+  weaknesses  Json?
+  suggestions Json?
+
+  skills        Json?
+  missingSkills Json?
+
+  keywords        Json?
+  missingKeywords Json?
+
+  experienceAnalysis Json?
+  educationAnalysis  Json?
+  projectsAnalysis   Json?
+
+  aiModel      String?
+  inputTokens  Int?
+  outputTokens Int?
+  totalTokens  Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@index([resumeId])
+  @@index([createdAt])
+}
+
+// =========================
+// RESUME JOB MATCH
+// =========================
+model ResumeJobMatch {
+  id       Int @id @default(autoincrement())
+  resumeId Int
+  jobId    Int
+
+  matchScore Int?
+
+  matchedSkills Json?
+  missingSkills Json?
+
+  matchedKeywords Json?
+  missingKeywords Json?
+
+  recommendations Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  job    Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([resumeId, jobId])
+  @@index([resumeId])
+  @@index([jobId])
+  @@index([matchScore])
+}
+
+// =========================
+// COMPANY & JOBS
+// =========================
 
 model Company {
   id          Int      @id @default(autoincrement())
@@ -37,32 +273,40 @@ model Company {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   ownerId     Int      @unique
-  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  jobs        Job[]
+
+  owner User  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  jobs  Job[]
 }
 
 model Job {
-  id           Int           @id @default(autoincrement())
-  title        String
-  description  String
-  location     String?
-  salaryMin    Int?
-  salaryMax    Int?
-  jobType      JobType       @default(FULL_TIME)
-  status       JobStatus     @default(OPEN)
-  skills       String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  companyId    Int
-  recruiterId  Int
-  applications Application[]
-  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  recruiter    User          @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String
+  location    String?
+  salaryMin   Int?
+  salaryMax   Int?
+  jobType     JobType   @default(FULL_TIME)
+  status      JobStatus @default(OPEN)
+  skills      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  companyId   Int
+  recruiterId Int
+
+  applications  Application[]
+  resumeMatches ResumeJobMatch[]
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  recruiter User    @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([recruiterId])
   @@index([status])
 }
+
+// =========================
+// APPLICATION
+// =========================
 
 model Application {
   id          Int               @id @default(autoincrement())
@@ -73,21 +317,83 @@ model Application {
   updatedAt   DateTime          @updatedAt
   jobId       Int
   candidateId Int
-  candidate   User              @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  candidate  User        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job        Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  interviews Interview[]
 
   @@unique([jobId, candidateId])
   @@index([candidateId])
   @@index([status])
 }
 
-model RefreshToken {
-  id        Int      @id @default(autoincrement())
-  tokenHash String   @unique
-  expiresAt DateTime
+model Interview {
+  id            Int @id @default(autoincrement())
+  applicationId Int
+
+  scheduledAt     DateTime
+  durationMinutes Int           @default(30)
+  mode            InterviewMode @default(ONLINE)
+
+  meetingLink String?
+  location    String?
+  notes       String?
+
+  status   InterviewStatus @default(SCHEDULED)
+  feedback String?
+
   createdAt DateTime @default(now())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+enum InterviewMode {
+  ONLINE
+  PHONE
+  IN_PERSON
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+// =========================
+// Job Search Event
+// =========================
+
+
+model JobSearchEvent {
+  id        Int      @id @default(autoincrement())
+  keyword   String   @db.VarChar(100)
+  createdAt DateTime @default(now())
+
+  @@index([keyword, createdAt])
+  @@index([createdAt])
+}
+
+
+// =========================
+// AUTH & NOTIFICATIONS
+// =========================
+
+
+model RefreshToken {
+  id         Int      @id @default(autoincrement())
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  rememberMe Boolean  @default(false)
+  userId     Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -100,7 +406,8 @@ model PushSubscription {
   auth      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -114,11 +421,16 @@ model Notification {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([userId, isRead])
 }
+
+// =========================
+// PAYMENTS & SUBSCRIPTIONS
+// =========================
 
 model Payment {
   id             Int  @id @default(autoincrement())
@@ -143,14 +455,6 @@ model Payment {
   @@index([subscriptionId])
 }
 
-enum SubscriptionStatus {
-  PENDING
-  ACTIVE
-  CANCELLED
-  EXPIRED
-  PAST_DUE
-}
-
 model Plan {
   id              Int     @id @default(autoincrement())
   name            String  @unique
@@ -160,6 +464,12 @@ model Plan {
   billingInterval String  @default("MONTHLY")
   maxActiveJobs   Int
   isActive        Boolean @default(true)
+
+  targetAudience      PlanAudience @default(BOTH)
+  maxAiMessages       Int          @default(10)
+  maxResumeAnalyses   Int          @default(3)
+  maxSkillGapAnalyses Int          @default(3)
+  maxCareerGuidance   Int          @default(1)
 
   razorpayPlanId String? @unique
 
@@ -182,22 +492,47 @@ model Subscription {
   currentPeriodEnd   DateTime?
   cancelAtPeriodEnd  Boolean   @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  userId    Int?
+  user      User?     @relation("UserSaaSSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
   recruiter User      @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
   plan      Plan      @relation(fields: [planId], references: [id])
   payments  Payment[]
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
   @@index([recruiterId, status])
   @@index([planId])
 }
 
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-  REFUNDED
+model UsageRecord {
+  id          Int          @id @default(autoincrement())
+  userId      Int
+  feature     UsageFeature
+  periodStart DateTime
+  periodEnd   DateTime
+  usageCount  Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, feature, periodStart])
+  @@index([userId, periodEnd])
+}
+
+enum UsageFeature {
+  AI_ASSISTANT
+  RESUME_ANALYSIS
+  SKILL_GAP_ANALYSIS
+  CAREER_GUIDANCE
+}
+
+enum PlanAudience {
+  CANDIDATE
+  RECRUITER
+  BOTH
 }
 
 enum UserRole {
@@ -226,4 +561,33 @@ enum ApplicationStatus {
   SHORTLISTED
   REJECTED
   HIRED
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum ResumeStatus {
+  UPLOADED
+  PROCESSING
+  COMPLETED
+  FAILED
 }

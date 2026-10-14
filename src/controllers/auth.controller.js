@@ -1,7 +1,6 @@
 const authService = require("../services/auth.service");
 const refreshTokenService = require("../services/refreshToken.service");
-
-
+const { ALLOWED_REGISTRATION_ROLES } = require("../constants/roles");
 // Common cookie options
 const cookieOptions = {
     httpOnly: true,
@@ -16,25 +15,37 @@ const cookieOptions = {
 // Access token: 15 minutes
 const accessCookieOptions = {
     ...cookieOptions,
-    maxAge: 1 * 60 * 1000,
+    maxAge: 15 * 60 * 1000, // temporary testing
 };
 
-// Refresh token: 7 days
-const refreshCookieOptions = {
+// Refresh token cookie
+const getRefreshCookieOptions = (rememberMe) => ({
     ...cookieOptions,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-};
 
+    ...(rememberMe && {
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+    }),
+});
 
 // REGISTER
 const register = async (req, res, next) => {
     try {
-        const { name, email, password } = req.body;
+
+        const { name, email, password, role } = req.body;
+
+        if (!ALLOWED_REGISTRATION_ROLES.has(role)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid registration role",
+            });
+        }
+
 
         const result = await authService.register(
             name,
             email,
-            password
+            password,
+            role
         );
 
         // Set access token
@@ -44,17 +55,21 @@ const register = async (req, res, next) => {
             accessCookieOptions
         );
 
+        // Register normally remembered
+        const rememberMe = false;
+
         // Generate and store refresh token
         const refreshToken =
             await refreshTokenService.createRefreshToken(
-                result.user.id
+                result.user.id,
+                rememberMe
             );
 
         // Set refresh token cookie
         res.cookie(
             "refreshToken",
             refreshToken,
-            refreshCookieOptions
+            getRefreshCookieOptions(rememberMe)
         );
 
         res.status(201).json({
@@ -68,11 +83,14 @@ const register = async (req, res, next) => {
     }
 };
 
-
 // LOGIN
 const login = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        const {
+            email,
+            password,
+            rememberMe = false,
+        } = req.body;
 
         const result = await authService.login(
             email,
@@ -89,14 +107,15 @@ const login = async (req, res, next) => {
         // Generate and store refresh token
         const refreshToken =
             await refreshTokenService.createRefreshToken(
-                result.user.id
+                result.user.id,
+                rememberMe
             );
 
         // Set refresh token cookie
         res.cookie(
             "refreshToken",
             refreshToken,
-            refreshCookieOptions
+            getRefreshCookieOptions(rememberMe)
         );
 
         res.status(200).json({
@@ -110,12 +129,15 @@ const login = async (req, res, next) => {
     }
 };
 
-
 // GET MY PROFILE
 const me = async (req, res, next) => {
     try {
         const user = await authService.me(req.user.id);
-        user['name'] = user.name.replace(/\b\w/g, char => char.toUpperCase());
+
+        user["name"] = user.name.replace(
+            /\b\w/g,
+            char => char.toUpperCase()
+        );
 
         res.status(200).json({
             success: true,
@@ -134,10 +156,15 @@ const refresh = async (req, res, next) => {
         const token = req.cookies.refreshToken;
 
         const result =
-            await refreshTokenService.rotateRefreshToken(token);
+            await refreshTokenService.rotateRefreshToken(
+                token
+            );
 
         // Generate new access token
-        const accessToken = authService.generateAccessToken(result.user);
+        const accessToken =
+            authService.generateAccessToken(
+                result.user
+            );
 
         res.cookie(
             "accessToken",
@@ -149,38 +176,34 @@ const refresh = async (req, res, next) => {
         res.cookie(
             "refreshToken",
             result.refreshToken,
-            refreshCookieOptions
+            getRefreshCookieOptions(
+                result.rememberMe
+            )
         );
 
         res.status(200).json({
             success: true,
             message: "Token refreshed successfully",
         });
+
     } catch (error) {
         next(error);
     }
 };
 
-
-
-
-
 // LOGOUT
 const logout = (req, res, next) => {
     try {
-        // Clear access token
         res.clearCookie(
             "accessToken",
             cookieOptions
         );
 
-        // Clear refresh token cookie
         res.clearCookie(
             "refreshToken",
             cookieOptions
         );
 
-        // Clear CSRF cookie
         res.clearCookie(
             "csrf-token",
             cookieOptions
@@ -197,10 +220,50 @@ const logout = (req, res, next) => {
 };
 
 
+
+const forgotPassword = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        const result = await authService.forgotPassword(email);
+
+        res.status(200).json({
+            success: true,
+            message: result.message,
+            tokenHash: result.tokenHash,
+            ...(process.env.NODE_ENV !== "production" && result.resetToken
+                ? { resetToken: result.resetToken }
+                : {}),
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const resetPassword = async (req, res, next) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        const result = await authService.resetPassword(
+            token,
+            newPassword
+        );
+
+        res.status(200).json({
+            success: true,
+            message: result.message,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 module.exports = {
     register,
     login,
     me,
     logout,
     refresh,
+    forgotPassword,
+    resetPassword,
 };

@@ -3,11 +3,18 @@ const express = require("express");
 const path = require("path");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+require("./queues/resume.worker");
 
 const app = express();
 
 // 1. Security headers
-app.use(require("helmet")());
+app.use(
+    require("helmet")({
+        crossOriginResourcePolicy: {
+            policy: "cross-origin",
+        },
+    })
+);
 
 // CORS Configuration
 const allowedOrigins = [
@@ -69,9 +76,17 @@ app.use("/api/application", require("./routes/application.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
 app.use("/api/notifications", require("./routes/notification.routes"));
 app.use("/api/auth", require("./routes/google.route"));
-app.use("/api/plans", require("./routes/plan.routes"));
-app.use("/api/subscriptions", require("./routes/subscription.routes"));
+app.use("/api/ai", require("./routes/ai.routes"));
+// app.use("/api/subscriptions", require("./routes/subscription.routes")); pushSubscription
 app.use("/api/auth", require("./routes/csrf.routes"));
+app.use("/api/resumes", require("./resume/resume.routes"));
+app.use("/api/skill-gap", require("./skill-gap/skillGap.routes"));
+app.use("/api/career-guidance", require("./career-guidance/careerGuidance.routes"));
+app.use("/api/plans", require("./plan/plan.routes"));
+app.use("/api/subscriptions", require("./subscription/subscription.routes"));
+app.use("/api/usage", require("./usage/usage.routes"));
+app.use("/api/interviews", require("./routes/interview.routes"));
+app.use("/api/search", require("./routes/search.routes"));
 
 // Error handler (must be last)
 app.use(require("./middleware/errorHandler"));

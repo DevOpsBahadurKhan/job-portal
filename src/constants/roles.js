@@ -1,0 +1,6 @@
+const ALLOWED_REGISTRATION_ROLES = new Set([
+    "CANDIDATE",
+    "RECRUITER",
+]);
+
+module.exports = { ALLOWED_REGISTRATION_ROLES };

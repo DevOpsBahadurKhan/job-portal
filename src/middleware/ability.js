@@ -8,7 +8,6 @@ const defineAbility = (user) => {
     );
 
     // Candidate permissions
-
     if (normalizedRole === "CANDIDATE") {
 
         can("read", "Job");
@@ -17,6 +16,20 @@ const defineAbility = (user) => {
 
         can("read", "Application", {
             candidateId: user.id
+        });
+
+
+        // Candidate profile permissions
+        can("read", "CandidateProfile", {
+            userId: user.id
+        });
+
+        can("create", "CandidateProfile", {
+            userId: user.id
+        });
+
+        can("update", "CandidateProfile", {
+            userId: user.id
         });
 
         // Notification permissions
@@ -38,14 +51,20 @@ const defineAbility = (user) => {
         });
     }
 
-
     // Recruiter permissions
-
     if (normalizedRole === "RECRUITER") {
 
         can("create", "Company");
 
         can("read", "Company", {
+            ownerId: user.id
+        });
+
+        can("update", "Company", {
+            ownerId: user.id
+        });
+
+        can("delete", "Company", {
             ownerId: user.id
         });
 
@@ -55,10 +74,6 @@ const defineAbility = (user) => {
 
         can("update", "Job", {
             recruiterId: user.id
-        });
-
-        can("update", "Company", {
-            ownerId: user.id
         });
 
         can("delete", "Job", {
@@ -76,6 +91,7 @@ const defineAbility = (user) => {
                 recruiterId: user.id
             }
         });
+
 
         // Notification permissions
         can("read", "Notification", {
@@ -99,7 +115,6 @@ const defineAbility = (user) => {
 
 
     // Admin permissions
-
     if (normalizedRole === "ADMIN") {
 
         can("manage", "all");
@@ -110,13 +125,11 @@ const defineAbility = (user) => {
         });
     }
 
-
     // Super Admin permissions
-
     if (normalizedRole === "SUPER_ADMIN") {
 
         can("manage", "all");
-        
+
         // Admin cannot update himself
         cannot("update", "User", {
             id: user.id

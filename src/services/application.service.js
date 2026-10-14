@@ -120,7 +120,100 @@ const getMyApplicationsService = async (candidateId) => {
 }
 
 
+
+const getRecruiterApplicationsService = async (recruiterId) => {
+    return prisma.application.findMany({
+        where: {
+            job: {
+                recruiterId: Number(recruiterId),
+            },
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+        include: {
+            job: {
+                select: {
+                    id: true,
+                    title: true,
+                    location: true,
+                    salaryMin: true,
+                    salaryMax: true,
+                    jobType: true,
+                    status: true,
+                    company: {
+                        select: {
+                            id: true,
+                            name: true,
+                        },
+                    },
+                },
+            },
+            candidate: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                },
+            },
+        },
+    });
+};
+
+
+const updateRecruiterApplicationStatusService = async (
+    applicationId,
+    recruiterId,
+    status
+) => {
+    const allowedStatuses = [
+        "APPLIED",
+        "PENDING",
+        "SHORTLISTED",
+        "ACCEPTED",
+        "REJECTED",
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+        const error = new Error("Invalid application status");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const application = await prisma.application.findFirst({
+        where: {
+            id: Number(applicationId),
+            job: {
+                recruiterId: Number(recruiterId),
+            },
+        },
+        select: {
+            id: true,
+        },
+    });
+
+    if (!application) {
+        const error = new Error(
+            "Application not found or access denied"
+        );
+        error.statusCode = 404;
+        throw error;
+    }
+
+    return prisma.application.update({
+        where: {
+            id: application.id,
+        },
+        data: {
+            status,
+        },
+    });
+};
+
+
 module.exports = {
     applyJobService,
     getMyApplicationsService,
+    getRecruiterApplicationsService,
+    updateRecruiterApplicationStatusService
 };
