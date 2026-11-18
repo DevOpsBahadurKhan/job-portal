@@ -161,54 +161,65 @@ const getRecruiterApplicationsService = async (recruiterId) => {
 };
 
 
+
 const updateRecruiterApplicationStatusService = async (
-    applicationId,
-    recruiterId,
-    status
+  applicationId,
+  recruiterId,
+  status
 ) => {
-    const allowedStatuses = [
-        "APPLIED",
-        "PENDING",
-        "SHORTLISTED",
-        "ACCEPTED",
-        "REJECTED",
-    ];
+  const allowedStatuses = [
+    "APPLIED",
+    "PENDING",
+    "SHORTLISTED",
+    "ACCEPTED",
+    "REJECTED",
+  ];
 
-    if (!allowedStatuses.includes(status)) {
-        const error = new Error("Invalid application status");
-        error.statusCode = 400;
-        throw error;
-    }
+  if (!allowedStatuses.includes(status)) {
+    const error = new Error("Invalid application status");
+    error.statusCode = 400;
+    throw error;
+  }
 
-    const application = await prisma.application.findFirst({
-        where: {
-            id: Number(applicationId),
-            job: {
-                recruiterId: Number(recruiterId),
-            },
-        },
-        select: {
-            id: true,
-        },
-    });
+  // 1. Verify application ownership and get candidate ID
+  const application = await prisma.application.findFirst({
+    where: {
+      id: Number(applicationId),
+      job: {
+        recruiterId: Number(recruiterId),
+      },
+    },
+    select: {
+      id: true,
+      candidateId: true,
+    },
+  });
 
-    if (!application) {
-        const error = new Error(
-            "Application not found or access denied"
-        );
-        error.statusCode = 404;
-        throw error;
-    }
+  if (!application) {
+    const error = new Error(
+      "Application not found or access denied"
+    );
+    error.statusCode = 404;
+    throw error;
+  }
 
-    return prisma.application.update({
-        where: {
-            id: application.id,
-        },
-        data: {
-            status,
-        },
-    });
+  // 2. Update status in database
+  const updatedApplication = await prisma.application.update({
+    where: {
+      id: application.id,
+    },
+    data: {
+      status,
+    },
+  });
+
+  // 3. Return candidateId for Socket.IO notification
+  return {
+    ...updatedApplication,
+    candidateId: application.candidateId,
+  };
 };
+
 
 
 module.exports = {

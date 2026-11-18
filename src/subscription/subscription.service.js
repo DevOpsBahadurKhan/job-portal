@@ -1,3 +1,4 @@
+
 const prisma = require("../prisma");
 
 const getMySubscription = async (userId) => {
@@ -11,7 +12,6 @@ const getMySubscription = async (userId) => {
         Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)
     );
 
-    // Find the user's active SaaS subscription.
     const subscription = await prisma.subscription.findFirst({
         where: {
             userId,
@@ -19,15 +19,10 @@ const getMySubscription = async (userId) => {
             currentPeriodStart: { lte: now },
             currentPeriodEnd: { gt: now },
         },
-        include: {
-            plan: true,
-        },
-        orderBy: {
-            createdAt: "desc",
-        },
+        include: { plan: true },
+        orderBy: { createdAt: "desc" },
     });
 
-    // Fallback to the active FREE plan.
     const plan =
         subscription?.plan ??
         (await prisma.plan.findFirst({
@@ -53,9 +48,7 @@ const getMySubscription = async (userId) => {
         where: {
             userId,
             periodStart,
-            feature: {
-                in: features.map((item) => item.feature),
-            },
+            feature: { in: features.map((item) => item.feature) },
         },
     });
 
@@ -106,6 +99,258 @@ const getMySubscription = async (userId) => {
     };
 };
 
+const subscribeToPlan = async ({ userId, planId }) => {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, role: true },
+    });
+
+    if (!user) {
+        const error = new Error("User not found");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    if (!["CANDIDATE", "RECRUITER"].includes(user.role)) {
+        const error = new Error("Your role cannot subscribe to plans");
+        error.statusCode = 403;
+        throw error;
+    }
+
+    const plan = await prisma.plan.findFirst({
+        where: {
+            id: planId,
+            isActive: true,
+            targetAudience: { in: [user.role, "BOTH"] },
+        },
+    });
+
+    if (!plan) {
+        const error = new Error(
+            "Plan not found, inactive, or unavailable for your role"
+        );
+        error.statusCode = 404;
+        throw error;
+    }
+
+    const now = new Date();
+
+    const activeSubscription = await prisma.subscription.findFirst({
+        where: {
+            userId,
+            status: "ACTIVE",
+            currentPeriodStart: { lte: now },
+            currentPeriodEnd: { gt: now },
+        },
+        orderBy: { createdAt: "desc" },
+    });
+
+    const isFreePlan = plan.price === 0 || plan.name.toUpperCase() === "FREE";
+
+    if (activeSubscription && activeSubscription.planId === plan.id) {
+        const error = new Error("You are already subscribed to this plan");
+        error.statusCode = 409;
+        throw error;
+    }
+
+    if (activeSubscription && isFreePlan) {
+        const error = new Error(
+            "You already have an active subscription. Manage your current plan before switching to Free."
+        );
+        error.statusCode = 409;
+        throw error;
+    }
+
+    
+
+    const pendingSubscription = await prisma.subscription.findFirst({
+        where: {
+            userId,
+            status: "PENDING",
+        },
+        include: {
+            plan: true,
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+
+    if (pendingSubscription) {
+        // Same plan: resume checkout using the existing subscription.
+        if (pendingSubscription.planId === plan.id) {
+            return {
+                subscription: pendingSubscription,
+                requiresPayment: true,
+                message:
+                    "Existing pending subscription found. Continue payment.",
+            };
+        }
+
+        // Different plan: don't silently reuse the wrong subscription.
+        const error = new Error(
+            `You already have a pending ${pendingSubscription.plan.name} subscription. Complete or cancel it before selecting another plan.`
+        );
+
+        error.statusCode = 409;
+        throw error;
+    }
+
+
+    if (pendingSubscription) {
+        const error = new Error(
+            "You already have a pending subscription. Complete or cancel it first."
+        );
+        error.statusCode = 409;
+        throw error;
+    }
+
+    // Free plans can activate immediately.
+    // Paid plans remain PENDING until payment is verified.
+    const status = isFreePlan ? "ACTIVE" : "PENDING";
+
+    let currentPeriodStart = null;
+    let currentPeriodEnd = null;
+
+    if (isFreePlan) {
+        currentPeriodStart = now;
+        currentPeriodEnd = new Date(now);
+
+        const interval = plan.billingInterval.toUpperCase();
+
+        if (interval === "YEARLY" || interval === "ANNUAL") {
+            currentPeriodEnd.setFullYear(
+                currentPeriodEnd.getFullYear() + 1
+            );
+        } else {
+            currentPeriodEnd.setMonth(
+                currentPeriodEnd.getMonth() + 1
+            );
+        }
+    }
+
+    const subscription = await prisma.subscription.create({
+        data: {
+            userId,
+            // The current schema requires recruiterId for every subscription.
+            // This field should ideally be made optional or redesigned later.
+            recruiterId: userId,
+            planId: plan.id,
+            status,
+            currentPeriodStart,
+            currentPeriodEnd,
+        },
+        include: {
+            plan: true,
+        },
+    });
+
+    return {
+        subscription,
+        requiresPayment: !isFreePlan,
+        message: isFreePlan
+            ? "Free plan activated successfully"
+            : "Subscription created. Payment is required before activation.",
+    };
+};
+
+const cancelMySubscription = async (userId, subscriptionId) => {
+    const subscription = await prisma.subscription.findFirst({
+        where: {
+            id: subscriptionId,
+            userId,
+        },
+        include: {
+            plan: true,
+        },
+    });
+
+    if (!subscription) {
+        const error = new Error("Subscription not found.");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    if (subscription.status === "CANCELLED") {
+        const error = new Error("Subscription is already cancelled.");
+        error.statusCode = 409;
+        throw error;
+    }
+
+    // Pending subscriptions can be cancelled locally only
+    // when no payment-provider subscription has been created.
+    if (subscription.status === "PENDING") {
+        if (subscription.razorpaySubscriptionId) {
+            const error = new Error(
+                "This subscription requires provider-side cancellation."
+            );
+            error.statusCode = 409;
+            throw error;
+        }
+
+        return prisma.subscription.update({
+            where: { id: subscription.id },
+            data: { status: "CANCELLED" },
+            select: {
+                id: true,
+                status: true,
+                plan: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                cancelAtPeriodEnd: true,
+                currentPeriodEnd: true,
+            },
+        });
+    }
+
+    if (subscription.status !== "ACTIVE") {
+        const error = new Error(
+            "Only pending or active subscriptions can be cancelled."
+        );
+        error.statusCode = 409;
+        throw error;
+    }
+
+    // Free plan is the default access tier; don't cancel it.
+    if (subscription.plan.price === 0) {
+        const error = new Error(
+            "The Free plan cannot be cancelled."
+        );
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // Paid plan: retain access until the current period ends.
+    if (subscription.cancelAtPeriodEnd) {
+        return subscription;
+    }
+
+    return prisma.subscription.update({
+        where: { id: subscription.id },
+        data: {
+            cancelAtPeriodEnd: true,
+        },
+        select: {
+            id: true,
+            status: true,
+            plan: {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
+            cancelAtPeriodEnd: true,
+            currentPeriodEnd: true,
+        },
+    });
+};
+
+
 module.exports = {
     getMySubscription,
+    subscribeToPlan,
+    cancelMySubscription
 };

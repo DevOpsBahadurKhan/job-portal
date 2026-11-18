@@ -27,6 +27,26 @@ const tools = [
             properties: {},
         },
     },
+    {
+        name: "job_recommendation",
+        description:
+            "Recommend relevant jobs using the authenticated candidate's profile, preferred roles, and preferred locations. Use this when the user asks for personalized job recommendations. Explicit keyword or location filters provided by the user should take priority over profile defaults.",
+        parameters: {
+            type: "OBJECT",
+            properties: {
+                keyword: {
+                    type: "STRING",
+                    description:
+                        "Optional job title or skill specified by the user.",
+                },
+                location: {
+                    type: "STRING",
+                    description:
+                        "Optional job location specified by the user.",
+                },
+            },
+        },
+    },
 ];
 
 const toolDeclarations = tools.map((tool) => ({

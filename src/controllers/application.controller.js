@@ -5,6 +5,10 @@ const {
     updateRecruiterApplicationStatusService
 } = require("../services/application.service");
 
+const {
+    emitApplicationStatusUpdated,
+} = require("../socket");
+
 
 const applyJob = async (req, res, next) => {
     try {
@@ -59,7 +63,7 @@ const getMyApplications = async (req, res, next) => {
 
 const getRecruiterApplications = async (req, res, next) => {
     try {
-        if (req.user.role !== "RECRUITER" ) {
+        if (req.user.role !== "RECRUITER") {
             const error = new Error(
                 "Only recruiters can view received applications"
             );
@@ -106,6 +110,30 @@ const updateRecruiterApplicationStatus = async (req, res, next) => {
                 req.user.id,
                 status
             );
+
+        // Service must return the candidate's user ID.
+        const candidateId = application.candidateId;
+
+        if (candidateId == null) {
+            throw new Error(
+                "Application response is missing candidateId"
+            );
+        }
+
+        // Socket.IO event with error handling
+        try {
+            emitApplicationStatusUpdated(candidateId, {
+                applicationId: application.id,
+                status: application.status,
+                updatedAt: application.updatedAt,
+            });
+        } catch (socketError) {
+            console.error(
+                "Socket notification failed:",
+                socketError.message
+            );
+        }
+
 
         return res.status(200).json({
             success: true,

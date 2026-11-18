@@ -506,6 +506,7 @@ model Subscription {
   @@index([planId])
 }
 
+
 model UsageRecord {
   id          Int          @id @default(autoincrement())
   userId      Int
